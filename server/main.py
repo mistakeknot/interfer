@@ -12,6 +12,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, StreamingResponse
 from starlette.routing import Route
 
+from .experiments.config import load_experiment_configs
 from .metal_worker import MetalWorker
 from .schema import ChatCompletionChunk
 
@@ -156,7 +157,10 @@ def create_app(dry_run: bool = False) -> Starlette:
     When *dry_run* is False, a MetalWorker subprocess is spawned on startup
     and shut down on application exit.
     """
-    worker: MetalWorker | None = None if dry_run else MetalWorker()
+    exp_configs = load_experiment_configs()
+    worker: MetalWorker | None = (
+        None if dry_run else MetalWorker(experiment_configs=exp_configs)
+    )
 
     @asynccontextmanager
     async def _lifespan(app: Starlette):

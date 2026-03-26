@@ -62,6 +62,7 @@ def _worker_loop(
     req_queue: multiprocessing.Queue,  # type: ignore[type-arg]
     resp_queue: multiprocessing.Queue,  # type: ignore[type-arg]
     memory_limit_bytes: int,
+    experiment_configs: dict | None = None,
 ) -> None:
     """Run in a *spawned* subprocess — this is the only place MLX is imported.
 
@@ -73,6 +74,8 @@ def _worker_loop(
         Outgoing :class:`WorkerResponse` messages to the main process.
     memory_limit_bytes:
         Hard Metal memory limit passed to ``mx.metal.set_memory_limit``.
+    experiment_configs:
+        Optional dict of experiment configs to pass to InferenceEngine.
     """
     import mlx.core as mx  # noqa: F811 — intentionally imported here only
 
@@ -90,7 +93,7 @@ def _worker_loop(
         _set_limit(memory_limit_bytes)
 
     pid = os.getpid()
-    engine = InferenceEngine()
+    engine = InferenceEngine(experiment_configs=experiment_configs)
 
     while True:
         try:
@@ -125,6 +128,7 @@ def _worker_loop(
                             or mx.metal.get_peak_memory
                         )(),
                         "loaded_models": list(engine._models.keys()),
+                        "experiment_hooks": engine.hook_stats,
                     },
                 )
             )
@@ -179,11 +183,16 @@ def _worker_loop(
             try:
                 # Stream tokens back as individual responses.
                 # Each has status="token"; the final has status="done".
+                kv_bits = request.payload.get("kv_bits")
+                max_kv_size = request.payload.get("max_kv_size")
+
                 for token_text in engine.generate(
                     prompt=prompt,
                     model_name=model_name,
                     max_tokens=max_tokens,
                     temperature=temperature,
+                    kv_bits=kv_bits,
+                    max_kv_size=max_kv_size,
                 ):
                     resp_queue.put(
                         WorkerResponse(
@@ -192,11 +201,23 @@ def _worker_loop(
                             data={"text": token_text},
                         )
                     )
+                # Include generation metrics in the final response
+                done_data: dict = {"finish_reason": "stop"}
+                if engine.last_metrics is not None:
+                    m = engine.last_metrics
+                    done_data["metrics"] = {
+                        "generation_tps": m.generation_tps,
+                        "prompt_tps": m.prompt_tps,
+                        "peak_memory_gb": m.peak_memory_gb,
+                        "early_exit_rate": m.early_exit_rate,
+                        "mean_confidence": m.mean_confidence,
+                        "tokens_generated": m.tokens_generated,
+                    }
                 resp_queue.put(
                     WorkerResponse(
                         request_id=request.request_id,
                         status="done",
-                        data={"finish_reason": "stop"},
+                        data=done_data,
                     )
                 )
             except Exception as exc:
@@ -240,8 +261,13 @@ class MetalWorker:
         worker.shutdown()
     """
 
-    def __init__(self, memory_limit_bytes: int = _DEFAULT_MEMORY_LIMIT) -> None:
+    def __init__(
+        self,
+        memory_limit_bytes: int = _DEFAULT_MEMORY_LIMIT,
+        experiment_configs: dict | None = None,
+    ) -> None:
         self._memory_limit_bytes = memory_limit_bytes
+        self._experiment_configs = experiment_configs
         self._process: multiprocessing.Process | None = None
         self._req_queue: multiprocessing.Queue | None = None  # type: ignore[type-arg]
         self._resp_queue: multiprocessing.Queue | None = None  # type: ignore[type-arg]
@@ -259,7 +285,12 @@ class MetalWorker:
 
         self._process = ctx.Process(
             target=_worker_loop,
-            args=(self._req_queue, self._resp_queue, self._memory_limit_bytes),
+            args=(
+                self._req_queue,
+                self._resp_queue,
+                self._memory_limit_bytes,
+                self._experiment_configs,
+            ),
             daemon=True,
             name="interfere-metal-worker",
         )
