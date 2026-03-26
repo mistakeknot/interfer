@@ -59,6 +59,8 @@ async def _generate_worker_tokens(
     prompt: str,
     max_tokens: int,
     temperature: float,
+    kv_bits: int | None = None,
+    kv_group_size: int = 64,
 ) -> AsyncGenerator[str, None]:
     """Yield SSE tokens from the Metal worker subprocess."""
     chunk = ChatCompletionChunk(model=model)
@@ -71,6 +73,8 @@ async def _generate_worker_tokens(
         prompt=prompt,
         max_tokens=max_tokens,
         temperature=temperature,
+        kv_bits=kv_bits,
+        kv_group_size=kv_group_size,
     )
 
     def _next_token():
@@ -121,6 +125,8 @@ async def _chat_completions(request: Request) -> JSONResponse | StreamingRespons
     model = body.get("model", "dry-run")
     max_tokens = body.get("max_tokens", 512)
     temperature = body.get("temperature", 0.7)
+    kv_bits = body.get("kv_bits")
+    kv_group_size = body.get("kv_group_size", 64)
 
     dry_run: bool = request.app.state.dry_run
     worker: MetalWorker | None = request.app.state.worker
@@ -138,7 +144,13 @@ async def _chat_completions(request: Request) -> JSONResponse | StreamingRespons
             prompt = messages[-1].get("content", "")
 
         generator = _generate_worker_tokens(
-            worker, model, prompt, max_tokens, temperature
+            worker,
+            model,
+            prompt,
+            max_tokens,
+            temperature,
+            kv_bits=kv_bits,
+            kv_group_size=kv_group_size,
         )
 
     return StreamingResponse(
