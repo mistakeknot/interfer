@@ -83,6 +83,7 @@ class BenchmarkResult:
     thermal_end: str
     output_preview: str  # first 200 chars
     category: str = ""
+    kv_bits: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -103,6 +104,7 @@ class BenchmarkSummary:
     total_time_s: float
     thermal_start: str
     thermal_end: str
+    kv_bits: int | None = None
     results: list[BenchmarkResult] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -128,6 +130,8 @@ def run_benchmark(
     temperature: float = 0.1,
     prompts: list[dict[str, str]] | None = None,
     warm_up: bool = True,
+    kv_bits: int | None = None,
+    kv_group_size: int = 64,
 ) -> BenchmarkSummary:
     """Run the full benchmark corpus against a model.
 
@@ -137,6 +141,8 @@ def run_benchmark(
         temperature: Sampling temperature (low for reproducibility).
         prompts: Custom prompt corpus, or None for the default.
         warm_up: If True, run a single warm-up generation first.
+        kv_bits: If set, quantize the KV cache to this many bits (2, 4, or 8).
+        kv_group_size: Group size for KV cache quantization. Default: 64.
 
     Returns:
         BenchmarkSummary with per-prompt results and aggregated stats.
@@ -149,7 +155,15 @@ def run_benchmark(
 
     # Warm up: load model into memory
     if warm_up:
-        list(engine.generate("Hello", model_name=model_name, max_tokens=1))
+        list(
+            engine.generate(
+                "Hello",
+                model_name=model_name,
+                max_tokens=1,
+                kv_bits=kv_bits,
+                kv_group_size=kv_group_size,
+            )
+        )
 
     thermal_start = thermal.read()
     results: list[BenchmarkResult] = []
@@ -170,6 +184,8 @@ def run_benchmark(
             model_name=model_name,
             max_tokens=max_tokens,
             temperature=temperature,
+            kv_bits=kv_bits,
+            kv_group_size=kv_group_size,
         ):
             if not tokens:
                 ttft = time.perf_counter() - gen_start
@@ -193,6 +209,7 @@ def run_benchmark(
                 thermal_end=thermal_now.level,
                 output_preview=output[:200],
                 category=category,
+                kv_bits=kv_bits,
             )
         )
 
@@ -215,15 +232,22 @@ def run_benchmark(
         total_time_s=round(total_time, 2),
         thermal_start=thermal_start.level,
         thermal_end=thermal_end.level,
+        kv_bits=kv_bits,
         results=results,
     )
 
 
 def print_summary(summary: BenchmarkSummary) -> None:
     """Print a human-readable benchmark summary."""
+    kv_label = (
+        f"  KV bits:      {summary.kv_bits}"
+        if summary.kv_bits
+        else "  KV bits:      none (fp16)"
+    )
     print(f"\n{'='*60}")
     print(f"  Benchmark: {summary.model}")
     print(f"{'='*60}")
+    print(kv_label)
     print(f"  Runs:        {summary.total_runs}")
     print(f"  Median tok/s: {summary.median_tok_s}")
     print(f"  Mean tok/s:   {summary.mean_tok_s}")

@@ -184,6 +184,7 @@ def _worker_loop(
                 # Stream tokens back as individual responses.
                 # Each has status="token"; the final has status="done".
                 kv_bits = request.payload.get("kv_bits")
+                kv_group_size = request.payload.get("kv_group_size", 64)
                 max_kv_size = request.payload.get("max_kv_size")
 
                 for token_text in engine.generate(
@@ -192,6 +193,7 @@ def _worker_loop(
                     max_tokens=max_tokens,
                     temperature=temperature,
                     kv_bits=kv_bits,
+                    kv_group_size=kv_group_size,
                     max_kv_size=max_kv_size,
                 ):
                     resp_queue.put(
@@ -343,22 +345,31 @@ class MetalWorker:
         max_tokens: int = 512,
         temperature: float = 0.7,
         timeout: float = 60.0,
+        kv_bits: int | None = None,
+        kv_group_size: int = 64,
+        max_kv_size: int | None = None,
     ) -> Generator[str, None, None]:
         """Stream generated tokens from the Metal subprocess.
 
         Yields decoded text segments. Raises on error or timeout.
         """
         request_id = f"gen-{time.monotonic_ns()}"
+        payload: dict[str, Any] = {
+            "model_name": model_name,
+            "prompt": prompt,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+        }
+        if kv_bits is not None:
+            payload["kv_bits"] = kv_bits
+            payload["kv_group_size"] = kv_group_size
+        if max_kv_size is not None:
+            payload["max_kv_size"] = max_kv_size
         self._send(
             WorkerRequest(
                 command=WorkerCommand.GENERATE,
                 request_id=request_id,
-                payload={
-                    "model_name": model_name,
-                    "prompt": prompt,
-                    "max_tokens": max_tokens,
-                    "temperature": temperature,
-                },
+                payload=payload,
             )
         )
         while True:

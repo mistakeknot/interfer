@@ -51,6 +51,19 @@ def main(argv: list[str] | None = None) -> None:
         help="Output results as JSON instead of table",
     )
     parser.add_argument(
+        "--kv-bits",
+        type=int,
+        default=None,
+        choices=[2, 4, 8],
+        help="Quantize KV cache to N bits (2, 4, or 8). Default: no quantization.",
+    )
+    parser.add_argument(
+        "--kv-group-size",
+        type=int,
+        default=64,
+        help="Group size for KV cache quantization (default: 64)",
+    )
+    parser.add_argument(
         "--save",
         type=str,
         default=None,
@@ -64,6 +77,8 @@ def main(argv: list[str] | None = None) -> None:
         max_tokens=args.max_tokens,
         temperature=args.temperature,
         warm_up=not args.no_warmup,
+        kv_bits=args.kv_bits,
+        kv_group_size=args.kv_group_size,
     )
 
     if args.output_json:
@@ -76,7 +91,8 @@ def main(argv: list[str] | None = None) -> None:
         save_dir.mkdir(parents=True, exist_ok=True)
         model_slug = Path(args.model).name or args.model.replace("/", "_")
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        filename = f"{timestamp}-{model_slug}.json"
+        kv_suffix = f"-kv{args.kv_bits}" if args.kv_bits else ""
+        filename = f"{timestamp}-{model_slug}{kv_suffix}.json"
         save_path = save_dir / filename
         with open(save_path, "w") as f:
             json.dump(summary.to_dict(), f, indent=2)
