@@ -16,46 +16,52 @@ Key reasons: zero-copy Python path exists (mx.array memoryview + ctypes pread
 = 47.5 GB/s measured), flash-moe Metal contexts are incompatible with MLX,
 and the I/O bottleneck is SSD bandwidth not language overhead.
 
-## Phase 0: Starter Experiment (Day 0, resolves core uncertainty)
+## Phase 0: Starter Experiment (Day 0, resolves core uncertainty) — COMPLETE
 
 **Goal**: Measure whether Python pread-based expert streaming on Qwen 397B
 reaches within 20% of flash-moe's 11.1 tok/s. This one data point collapses
 the entire A-vs-D decision.
 
-### Task 0.1: Expert file preparation for Qwen 397B
+**Result**: 1.5 tok/s — 7.4x slower than flash-moe (86% gap). Kill criteria
+triggered (>30%). See `docs/benchmarks/streaming_phase0_analysis.md`.
 
-Qwen 397B already has repacked expert files from flash-moe at
-`~/Models/mlx-community-Qwen3.5-397B-A17B-4bit/packed_experts/`.
-Verify these exist and note the layout (expert_size, num_experts, components).
+### Task 0.1: Expert file preparation — DONE
 
-If not available, run `repack_experts.py` from flash-moe to generate them.
+Repacked all 60 layers via `repack_experts.py` from flash-moe: 203 GB at
+3.6 GB/s in 56 seconds. All layers verified (experts 0, 1, 255, 511 per layer).
 
-### Task 0.2: Proof-of-concept StreamingSwitchGLU
+### Task 0.2: Proof-of-concept StreamingSwitchGLU — DONE
 
-Write a minimal `streaming_switch.py` that:
+Implemented `server/streaming_switch.py` with `StreamingMoeBlock` class:
+- Lazy model loading: 397B in 1.6s, 5.1 GB GPU (expert weights on NVMe)
+- True zero-copy: `libc.pread()` → mx.array Metal buffer at 14.5 GB/s
+- Drop-in `SparseMoeBlock` replacement (MLX `nn.Module.__call__` uses C++
+  dispatch; instance-level `__call__` overrides are ignored, requiring a
+  full wrapper class rather than monkey-patching)
+- Dynamic buffer allocation for variable unique experts (10 decode, 87+ prefill)
 
-1. Pre-allocates mx.array buffer pool (K * num_components for double-buffering)
-2. Overrides `SwitchGLU.__call__`:
-   a. Run `self.gate(x)` to get routing scores
-   b. `mx.eval(inds)` to synchronize — get expert indices on CPU
-   c. pread selected experts from layer files via ctypes into mx.array memoryview
-   d. Stack loaded experts, assign to projection weights
-   e. Continue with standard SwitchGLU forward
-3. Monkey-patch into Qwen's MoE layers at load time
+### Task 0.3: Benchmark — DONE
 
-### Task 0.3: Benchmark vs flash-moe
+5 prompts × 200 tokens on Qwen 397B 4-bit:
 
-Run both on identical prompts (5 standard prompts, 200 tokens each):
-- flash-moe: `./metal_infer/infer --model <path> --stream --max-tokens 200`
-- Streaming mlx-lm: custom generate loop with StreamingSwitchGLU
+| Metric | Streaming | flash-moe | Gap |
+|--------|-----------|-----------|-----|
+| tok/s  | 1.5       | 11.1      | 7.4x|
+| TTFT   | 6.4s      | ~2s       | 3x  |
+| Memory | 37 GB     | 35 GB     | same|
+| pread  | 9.3 GB/s  | N/A       | —   |
 
-Measure: tok/s decode, TTFT, peak memory, page cache hit rate (via vm_stat).
+Per-layer breakdown (decode): 7.5ms pread + 3.5ms mx.eval sync + overhead = 11ms.
+60 layers × 11ms = 660ms/token → 1.5 tok/s.
 
-### Task 0.4: Decision gate
+### Task 0.4: Decision gate — >30% GAP → KILL CRITERIA
 
-- **Within 20%**: Proceed with Option D (this plan). flash-moe is reference only.
-- **20-30% gap**: Profile where time is lost. Fix if fixable (router sync, buffer copy).
-- **>30% gap**: Reassess. Option A may be justified for the performance delta.
+Bottleneck is NOT I/O bandwidth. It's 60 per-layer `mx.eval(inds)` CPU-GPU
+synchronization points (~2ms each). flash-moe avoids this by running the
+entire forward pass in fused Metal.
+
+**Decision**: Abandon Option D (pure Python pread). Promote Phase 4.1
+(flash-moe subprocess proxy) to next action.
 
 ## Phase 1: StreamingSwitchGLU Implementation (Days 1-3)
 
