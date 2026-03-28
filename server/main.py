@@ -11,12 +11,29 @@ from contextlib import asynccontextmanager
 
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import JSONResponse, StreamingResponse
+from starlette.responses import JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 
 from .cascade import CascadeConfig, CascadeDecision, CascadeStats
 from .experiments.config import load_experiment_configs
 from .metal_worker import MetalWorker
+from .prom import (
+    ACTIVE_REQUESTS,
+    CASCADE_DECISIONS,
+    ERRORS_TOTAL,
+    GPU_MEMORY_BYTES,
+    QUALITY_COMPOSITE,
+    QUEUE_DEPTH,
+    QUEUE_WAIT_SECONDS,
+    REJECTED_TOTAL,
+    REQUEST_COUNT,
+    REQUEST_LATENCY,
+    THERMAL_LEVEL,
+    THERMAL_LEVEL_MAP,
+    TOKENS_GENERATED,
+    generate_metrics_text,
+)
+from .queue import InferenceRequest, PriorityRequestQueue, QueueFullError
 from .schema import ChatCompletionChunk
 from .shadow_log import ShadowEntry, ShadowLogger
 from .thermal import ThermalMonitor
@@ -30,7 +47,30 @@ async def _health(request: Request) -> JSONResponse:
     worker: MetalWorker | None = request.app.state.worker
     thermal: ThermalMonitor | None = request.app.state.thermal
 
-    info: dict = {"status": "dry_run" if dry_run else "ready", "models": []}
+    # Determine server status
+    if dry_run:
+        status = "dry_run"
+    elif worker is not None and worker.is_degraded:
+        status = "degraded"
+    elif worker is not None and worker.is_restarting:
+        status = "restarting"
+    elif worker is not None and worker.is_alive():
+        status = "ready"
+    elif worker is not None:
+        status = "worker_down"
+    else:
+        status = "no_worker"
+
+    info: dict = {"status": status, "models": []}
+
+    if worker is not None:
+        info["restart_count"] = worker.restart_count
+        if worker.last_crash is not None:
+            info["last_crash"] = {
+                "classification": worker.last_crash.classification,
+                "exit_code": worker.last_crash.exit_code,
+                "timestamp": worker.last_crash.timestamp,
+            }
 
     if thermal is not None:
         try:
@@ -83,6 +123,7 @@ async def _generate_worker_tokens(
     loop = asyncio.get_running_loop()
     t0 = time.monotonic()
     completion_tokens = 0
+    tok_counter = TOKENS_GENERATED.labels(model=model)
 
     # Run the blocking generator in a thread so we don't block the event loop.
     # Each iteration of worker.generate() blocks on resp_queue.get().
@@ -106,6 +147,7 @@ async def _generate_worker_tokens(
         if token_text is None:
             break
         completion_tokens += 1
+        tok_counter.inc()
         data = json.dumps(chunk.to_delta_dict(content=token_text))
         yield f"data: {data}\n\n"
 
@@ -195,6 +237,72 @@ async def _chat_completions(request: Request) -> JSONResponse | StreamingRespons
     too low, escalates to a larger model or signals cloud fallback.
     """
     t0 = time.monotonic()
+    worker: MetalWorker | None = request.app.state.worker
+    inference_queue: PriorityRequestQueue = request.app.state.inference_queue
+    thermal_reject_threshold: int = request.app.state.thermal_reject_threshold
+
+    # -- Admission control: thermal gate --
+    t_mon: ThermalMonitor | None = request.app.state.thermal
+    if t_mon is not None:
+        try:
+            ts = t_mon.read()
+            thermal_val = THERMAL_LEVEL_MAP.get(ts.level, 0)
+            if thermal_val >= thermal_reject_threshold:
+                REJECTED_TOTAL.labels(reason="thermal").inc()
+                return JSONResponse(
+                    {
+                        "error": {
+                            "message": f"Server thermally throttled ({ts.level})",
+                            "type": "overloaded",
+                        }
+                    },
+                    status_code=503,
+                    headers={"Retry-After": "30"},
+                )
+        except Exception:
+            pass  # Thermal read failure — allow request through
+
+    # -- Admission control: queue depth gate --
+    QUEUE_DEPTH.set(inference_queue.depth)
+    if inference_queue.depth >= inference_queue.max_depth:
+        REJECTED_TOTAL.labels(reason="queue_full").inc()
+        return JSONResponse(
+            {
+                "error": {
+                    "message": f"Server busy ({inference_queue.depth} requests queued)",
+                    "type": "overloaded",
+                }
+            },
+            status_code=503,
+            headers={"Retry-After": "10"},
+        )
+
+    # -- Admission control: worker health gate --
+    if worker is not None and worker.is_degraded:
+        REJECTED_TOTAL.labels(reason="degraded").inc()
+        return JSONResponse(
+            {
+                "error": {
+                    "message": "Worker degraded — max restarts exceeded",
+                    "type": "server_error",
+                    "restart_count": worker.restart_count,
+                }
+            },
+            status_code=503,
+        )
+    if worker is not None and worker.is_restarting:
+        REJECTED_TOTAL.labels(reason="restarting").inc()
+        return JSONResponse(
+            {
+                "error": {
+                    "message": "Worker restarting — retry shortly",
+                    "type": "server_error",
+                }
+            },
+            status_code=503,
+            headers={"Retry-After": "5"},
+        )
+
     request_count: dict = request.app.state.request_count
     latency_samples: list = request.app.state.latency_samples
     cascade_config: CascadeConfig = request.app.state.cascade_config
@@ -202,12 +310,21 @@ async def _chat_completions(request: Request) -> JSONResponse | StreamingRespons
     model_tiers: list[str] = request.app.state.model_tiers
     shadow_logger: ShadowLogger | None = request.app.state.shadow_logger
 
+    # -- Enqueue and track wait time --
+    # Client priority: X-Interfere-Priority header (default 5, lower = higher)
+    client_priority = int(request.headers.get("x-interfere-priority", "5"))
+    client_priority = max(0, min(10, client_priority))  # clamp to 0-10
+
     request_count["total"] += 1
+    ACTIVE_REQUESTS.inc()
 
     try:
         body = await request.json()
     except Exception:
         request_count["errors"] += 1
+        ACTIVE_REQUESTS.dec()
+        ERRORS_TOTAL.labels(error_type="invalid_json").inc()
+        REQUEST_COUNT.labels(status="4xx").inc()
         return JSONResponse(
             {
                 "error": {
@@ -221,6 +338,9 @@ async def _chat_completions(request: Request) -> JSONResponse | StreamingRespons
     messages = body.get("messages")
     if not messages:
         request_count["errors"] += 1
+        ACTIVE_REQUESTS.dec()
+        ERRORS_TOTAL.labels(error_type="missing_messages").inc()
+        REQUEST_COUNT.labels(status="4xx").inc()
         return JSONResponse(
             {
                 "error": {
@@ -237,8 +357,33 @@ async def _chat_completions(request: Request) -> JSONResponse | StreamingRespons
     kv_bits = body.get("kv_bits")
     kv_group_size = body.get("kv_group_size", 64)
 
+    # Track this request in the queue for depth/backpressure visibility
+    queue_entry = InferenceRequest(
+        request_id=f"req-{id(request)}",
+        priority=client_priority,
+        prompt="",  # not used for tracking, just depth
+        model=model,
+        max_tokens=max_tokens,
+    )
+    try:
+        await inference_queue.put(queue_entry)
+    except QueueFullError:
+        ACTIVE_REQUESTS.dec()
+        REJECTED_TOTAL.labels(reason="queue_full").inc()
+        return JSONResponse(
+            {
+                "error": {
+                    "message": f"Server busy ({inference_queue.depth} requests queued)",
+                    "type": "overloaded",
+                }
+            },
+            status_code=503,
+            headers={"Retry-After": "10"},
+        )
+    QUEUE_DEPTH.set(inference_queue.depth)
+    queue_wait_start = time.monotonic()
+
     dry_run: bool = request.app.state.dry_run
-    worker: MetalWorker | None = request.app.state.worker
 
     # --- Cascade logic ---
     cascade_header: dict = {}
@@ -284,6 +429,7 @@ async def _chat_completions(request: Request) -> JSONResponse | StreamingRespons
 
             if decision == CascadeDecision.ACCEPT:
                 cascade_stats.accepts += 1
+                CASCADE_DECISIONS.labels(outcome="accept").inc()
                 cascade_stats.total_probe_time_s += probe_resp.data.get(
                     "probe_time_s", 0
                 )
@@ -320,11 +466,13 @@ async def _chat_completions(request: Request) -> JSONResponse | StreamingRespons
                 )
                 if i < len(model_tiers) - 1:
                     cascade_stats.escalations += 1
+                    CASCADE_DECISIONS.labels(outcome="escalate").inc()
                     continue  # try next tier
                 # Last tier — fall through to cloud
 
             # Cloud fallback
             cascade_stats.cloud_fallbacks += 1
+            CASCADE_DECISIONS.labels(outcome="cloud").inc()
             cascade_stats.total_probe_time_s += probe_resp.data.get("probe_time_s", 0)
             # Shadow log: cloud fallback — no local savings
             if shadow_logger is not None:
@@ -342,7 +490,17 @@ async def _chat_completions(request: Request) -> JSONResponse | StreamingRespons
                 )
             cascade_header["decision"] = CascadeDecision.CLOUD.value
             cascade_header["model"] = "cloud"
+            # Dequeue: cloud fallback exits the queue
+            try:
+                await inference_queue.get()
+            except Exception:
+                pass
+            QUEUE_DEPTH.set(inference_queue.depth)
+            QUEUE_WAIT_SECONDS.observe(time.monotonic() - queue_wait_start)
             latency_samples.append(time.monotonic() - t0)
+            REQUEST_LATENCY.labels(model="cloud").observe(time.monotonic() - t0)
+            REQUEST_COUNT.labels(status="2xx").inc()
+            ACTIVE_REQUESTS.dec()
             return JSONResponse(
                 {
                     "cascade": "cloud_fallback",
@@ -379,7 +537,19 @@ async def _chat_completions(request: Request) -> JSONResponse | StreamingRespons
             kv_group_size=kv_group_size,
         )
 
-    latency_samples.append(time.monotonic() - t0)
+    # Dequeue: request is being served
+    try:
+        await inference_queue.get()
+    except Exception:
+        pass
+    QUEUE_DEPTH.set(inference_queue.depth)
+    QUEUE_WAIT_SECONDS.observe(time.monotonic() - queue_wait_start)
+
+    elapsed = time.monotonic() - t0
+    latency_samples.append(elapsed)
+    REQUEST_LATENCY.labels(model=model).observe(elapsed)
+    REQUEST_COUNT.labels(status="2xx").inc()
+    ACTIVE_REQUESTS.dec()
 
     headers = {
         "Cache-Control": "no-cache",
@@ -443,6 +613,8 @@ def create_app(
     dry_run: bool = False,
     model_tiers: list[str] | None = None,
     cascade_config: CascadeConfig | None = None,
+    max_queue_depth: int = 8,
+    thermal_reject_level: str = "heavy",
 ) -> Starlette:
     """Create the interfere Starlette application.
 
@@ -451,11 +623,17 @@ def create_app(
 
     *model_tiers* configures the cascade ordering (smallest → largest).
     *cascade_config* tunes thresholds; defaults are sensible.
+    *max_queue_depth* bounds the inference waiting room (503 when full).
+    *thermal_reject_level* rejects new requests at this thermal pressure
+    or above ('heavy', 'trapping', 'sleeping'). Set to 'sleeping' to
+    only reject at the most extreme level.
     """
     exp_configs = load_experiment_configs()
     worker: MetalWorker | None = (
         None if dry_run else MetalWorker(experiment_configs=exp_configs)
     )
+    _inference_queue = PriorityRequestQueue(max_depth=max_queue_depth)
+    _thermal_reject_threshold = THERMAL_LEVEL_MAP.get(thermal_reject_level, 2)
 
     # Thermal monitoring runs in the main process (no Metal dependency)
     thermal: ThermalMonitor | None = None
@@ -492,6 +670,8 @@ def create_app(
         app.state.latency_samples = _latency_samples
         app.state.quality_samples = _quality_samples
         app.state.shadow_logger = _shadow_logger
+        app.state.inference_queue = _inference_queue
+        app.state.thermal_reject_threshold = _thermal_reject_threshold
         if worker is not None:
             worker.start()
             app.state.worker = worker
@@ -502,11 +682,44 @@ def create_app(
         if worker is not None and worker.is_alive():
             worker.shutdown()
 
-    async def _metrics(request: Request) -> JSONResponse:
-        """GET /metrics — JSON metrics for monitoring."""
+    def _update_lazy_gauges() -> None:
+        """Update gauges that are read on scrape, not per-request."""
+        if thermal is not None:
+            try:
+                ts = thermal.read()
+                THERMAL_LEVEL.set(THERMAL_LEVEL_MAP.get(ts.level, -1))
+            except Exception:
+                pass
+
+        if worker is not None and worker.is_alive():
+            try:
+                resp = worker.health(timeout=2.0)
+                d = resp.data
+                GPU_MEMORY_BYTES.labels(type="active").set(
+                    d.get("metal_active_memory", 0)
+                )
+                GPU_MEMORY_BYTES.labels(type="peak").set(d.get("metal_peak_memory", 0))
+            except Exception:
+                pass
+
+        if _quality_samples:
+            QUALITY_COMPOSITE.set(_quality_samples[-1])
+
+    async def _metrics(request: Request) -> JSONResponse | Response:
+        """GET /metrics — JSON or Prometheus format based on Accept header."""
         w: MetalWorker | None = request.app.state.worker
         t: ThermalMonitor | None = request.app.state.thermal
 
+        # Content negotiation: text/plain → Prometheus, else JSON
+        accept = request.headers.get("accept", "")
+        if "text/plain" in accept:
+            _update_lazy_gauges()
+            return Response(
+                content=generate_metrics_text(),
+                media_type="text/plain; version=0.0.4; charset=utf-8",
+            )
+
+        # Default: existing JSON format (backward compatible)
         data: dict = {
             "requests": _request_count.copy(),
             "latency": {},
@@ -562,9 +775,18 @@ def create_app(
 
         return JSONResponse(data)
 
+    async def _metrics_prometheus(request: Request) -> Response:
+        """GET /metrics/prometheus — always Prometheus exposition format."""
+        _update_lazy_gauges()
+        return Response(
+            content=generate_metrics_text(),
+            media_type="text/plain; version=0.0.4; charset=utf-8",
+        )
+
     routes = [
         Route("/health", _health, methods=["GET"]),
         Route("/metrics", _metrics, methods=["GET"]),
+        Route("/metrics/prometheus", _metrics_prometheus, methods=["GET"]),
         Route("/v1/chat/completions", _chat_completions, methods=["POST"]),
         Route("/v1/models/load", _load_model, methods=["POST"]),
     ]
@@ -581,4 +803,6 @@ def create_app(
     app.state.latency_samples = _latency_samples
     app.state.quality_samples = _quality_samples
     app.state.shadow_logger = _shadow_logger
+    app.state.inference_queue = _inference_queue
+    app.state.thermal_reject_threshold = _thermal_reject_threshold
     return app
