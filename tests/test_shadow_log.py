@@ -8,7 +8,13 @@ import tempfile
 
 import pytest
 
-from server.shadow_log import ShadowEntry, ShadowLogger, _cloud_cost_usd
+from server.shadow_log import (
+    ShadowEntry,
+    ShadowLogger,
+    _cloud_cost_usd,
+    _parse_costs_yaml,
+    infer_cloud_model,
+)
 
 
 @pytest.fixture
@@ -156,3 +162,111 @@ def test_shadow_logger_multiple_entries(shadow_db: str) -> None:
     conn.close()
 
     assert count == 5
+
+
+# ---------------------------------------------------------------------------
+# Model tier inference
+# ---------------------------------------------------------------------------
+
+
+def test_infer_cloud_model_small() -> None:
+    """Small models (< 15B) map to haiku."""
+    assert infer_cloud_model("Qwen3.5-9B-4bit") == "claude-haiku-4-5"
+    assert (
+        infer_cloud_model("mlx-community/Qwen2.5-0.5B-Instruct-4bit")
+        == "claude-haiku-4-5"
+    )
+
+
+def test_infer_cloud_model_medium() -> None:
+    """Medium models (15-100B) map to sonnet."""
+    assert infer_cloud_model("Qwen3.5-35B-A3B-4bit") == "claude-sonnet-4-6"
+    assert infer_cloud_model("some-model-70b-instruct") == "claude-sonnet-4-6"
+
+
+def test_infer_cloud_model_large() -> None:
+    """Large models (> 100B) map to opus."""
+    assert infer_cloud_model("Qwen3.5-397B-A17B-4bit") == "claude-opus-4-6"
+
+
+def test_infer_cloud_model_unknown() -> None:
+    """Unknown model names default to sonnet."""
+    assert infer_cloud_model("some-mystery-model") == "claude-sonnet-4-6"
+
+
+def test_infer_cloud_model_case_insensitive() -> None:
+    """Parameter extraction is case insensitive."""
+    assert infer_cloud_model("model-9b-4bit") == "claude-haiku-4-5"
+    assert infer_cloud_model("model-9B-4bit") == "claude-haiku-4-5"
+
+
+# ---------------------------------------------------------------------------
+# Costs.yaml parsing
+# ---------------------------------------------------------------------------
+
+
+def test_parse_costs_yaml(tmp_path) -> None:
+    """Parse a costs.yaml file correctly."""
+    costs_file = tmp_path / "costs.yaml"
+    costs_file.write_text("""
+models:
+  haiku:
+    input_per_mtok: 1.00
+    output_per_mtok: 5.00
+  sonnet:
+    input_per_mtok: 4.00
+    output_per_mtok: 20.00
+  opus:
+    input_per_mtok: 20.00
+    output_per_mtok: 100.00
+""")
+    pricing = _parse_costs_yaml(costs_file)
+    assert pricing["haiku"] == (1.00, 5.00)
+    assert pricing["sonnet"] == (4.00, 20.00)
+    assert pricing["opus"] == (20.00, 100.00)
+
+
+# ---------------------------------------------------------------------------
+# Auto-inferred cloud model in logger
+# ---------------------------------------------------------------------------
+
+
+def test_logger_auto_infers_cloud_model(shadow_db: str) -> None:
+    """When cloud_model is empty, logger infers from local model size."""
+    logger = ShadowLogger(db_path=shadow_db)
+    logger.log(
+        ShadowEntry(
+            cascade_decision="accept",
+            confidence=0.9,
+            local_model="Qwen3.5-9B-4bit",
+            local_tokens=256,
+        )
+    )
+    logger.close()
+
+    conn = sqlite3.connect(shadow_db)
+    row = conn.execute("SELECT cloud_model FROM local_routing_shadow").fetchone()
+    conn.close()
+
+    assert row[0] == "claude-haiku-4-5"
+
+
+def test_logger_uses_explicit_cloud_model(shadow_db: str) -> None:
+    """When cloud_model is set, logger uses it as-is."""
+    logger = ShadowLogger(db_path=shadow_db)
+    logger.log(
+        ShadowEntry(
+            cascade_decision="accept",
+            confidence=0.9,
+            local_model="Qwen3.5-9B-4bit",
+            local_tokens=256,
+            cloud_model="claude-opus-4-6",
+        )
+    )
+    logger.close()
+
+    conn = sqlite3.connect(shadow_db)
+    row = conn.execute("SELECT cloud_model FROM local_routing_shadow").fetchone()
+    conn.close()
+
+    assert row[0] == "claude-opus-4-6"
