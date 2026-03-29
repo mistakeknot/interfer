@@ -215,3 +215,50 @@ def test_scorer_to_dict_with_reference() -> None:
     d = score.to_dict()
     assert "reference_score" in d
     assert d["reference_score"] == 0.72
+
+
+# ---------------------------------------------------------------------------
+# _record_quality (main.py integration helper)
+# ---------------------------------------------------------------------------
+
+
+def test_record_quality_appends_to_samples() -> None:
+    """_record_quality adds composite score to the samples list."""
+    from server.main import _record_quality
+
+    samples: list[float] = []
+    _record_quality("test-model", {"composite": 0.85, "perplexity": 5.0}, samples)
+    assert len(samples) == 1
+    assert samples[0] == 0.85
+
+
+def test_record_quality_trims_overflow() -> None:
+    """_record_quality keeps at most _MAX_QUALITY_SAMPLES entries."""
+    from server.main import _MAX_QUALITY_SAMPLES, _record_quality
+
+    samples: list[float] = list(range(_MAX_QUALITY_SAMPLES))
+    _record_quality("test-model", {"composite": 0.99, "perplexity": 1.0}, samples)
+    assert len(samples) == _MAX_QUALITY_SAMPLES
+    assert samples[-1] == 0.99
+    # Oldest entry was trimmed
+    assert samples[0] == 1  # was 0, got trimmed
+
+
+def test_record_quality_handles_none_samples() -> None:
+    """_record_quality handles None samples list gracefully."""
+    from server.main import _record_quality
+
+    # Should not raise
+    _record_quality("test-model", {"composite": 0.85, "perplexity": 5.0}, None)
+
+
+def test_record_quality_handles_inf_perplexity() -> None:
+    """_record_quality skips perplexity histogram when infinity."""
+    from server.main import _record_quality
+
+    samples: list[float] = []
+    # Should not raise — inf perplexity is skipped
+    _record_quality(
+        "test-model", {"composite": 0.5, "perplexity": float("inf")}, samples
+    )
+    assert len(samples) == 1
