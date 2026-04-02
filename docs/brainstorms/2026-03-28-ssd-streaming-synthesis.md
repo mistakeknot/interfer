@@ -134,7 +134,7 @@ This gives a reference ceiling for each model without any integration work.
 
 ## Performance Findings (fd-performance)
 
-The performance agent identified issues in the existing interfere codebase that
+The performance agent identified issues in the existing interfer codebase that
 must be addressed before or alongside SSD streaming work:
 
 ### Must-Fix Before Streaming

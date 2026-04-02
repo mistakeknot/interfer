@@ -67,8 +67,8 @@ async def test_prometheus_endpoint_returns_text(client: httpx.AsyncClient) -> No
     assert "text/plain" in resp.headers["content-type"]
     # Prometheus format contains at least the HELP/TYPE preamble
     body = resp.text
-    assert "# HELP interfere_" in body
-    assert "# TYPE interfere_" in body
+    assert "# HELP interfer_" in body
+    assert "# TYPE interfer_" in body
 
 
 @pytest.mark.asyncio
@@ -77,7 +77,7 @@ async def test_content_negotiation_text_plain(client: httpx.AsyncClient) -> None
     resp = await client.get("/metrics", headers={"Accept": "text/plain"})
     assert resp.status_code == 200
     assert "text/plain" in resp.headers["content-type"]
-    assert "# HELP interfere_" in resp.text
+    assert "# HELP interfer_" in resp.text
 
 
 @pytest.mark.asyncio
@@ -115,9 +115,9 @@ async def test_request_updates_prometheus_counters(
     body = resp.text
 
     # Latency histogram should have at least one observation
-    assert 'interfere_request_latency_seconds_count{model="test-model"}' in body
+    assert 'interfer_request_latency_seconds_count{model="test-model"}' in body
     # Request counter should show 2xx
-    assert 'interfere_requests_total{status="2xx"}' in body
+    assert 'interfer_requests_total{status="2xx"}' in body
     # Note: tokens_generated won't increment in dry-run mode because
     # _generate_dry_run_tokens bypasses _generate_worker_tokens
 
@@ -132,8 +132,8 @@ async def test_error_updates_prometheus_counters(
     resp = await client.get("/metrics/prometheus")
     body = resp.text
 
-    assert 'interfere_errors_total{error_type="missing_messages"}' in body
-    assert 'interfere_requests_total{status="4xx"}' in body
+    assert 'interfer_errors_total{error_type="missing_messages"}' in body
+    assert 'interfer_requests_total{status="4xx"}' in body
 
 
 @pytest.mark.asyncio
@@ -149,7 +149,7 @@ async def test_active_requests_zero_after_completion(
     resp = await client.get("/metrics/prometheus")
     body = resp.text
     # Active requests gauge should be 0.0 after the request
-    assert "interfere_active_requests 0.0" in body
+    assert "interfer_active_requests 0.0" in body
 
 
 @pytest.mark.asyncio
@@ -158,7 +158,7 @@ async def test_thermal_gauge_in_prometheus(client: httpx.AsyncClient) -> None:
     resp = await client.get("/metrics/prometheus")
     body = resp.text
     # The HELP line should always be present even if value is default
-    assert "interfere_thermal_level" in body
+    assert "interfer_thermal_level" in body
 
 
 @pytest.mark.asyncio
@@ -166,7 +166,7 @@ async def test_gpu_memory_gauge_in_prometheus(client: httpx.AsyncClient) -> None
     """GPU memory gauge appears in Prometheus output."""
     resp = await client.get("/metrics/prometheus")
     body = resp.text
-    assert "interfere_gpu_memory_bytes" in body
+    assert "interfer_gpu_memory_bytes" in body
 
 
 @pytest.mark.asyncio
@@ -179,5 +179,5 @@ async def test_quality_histograms_in_prometheus(client: httpx.AsyncClient) -> No
 
     resp = await client.get("/metrics/prometheus")
     body = resp.text
-    assert "interfere_quality_score" in body
-    assert "interfere_quality_perplexity" in body
+    assert "interfer_quality_score" in body
+    assert "interfer_quality_perplexity" in body

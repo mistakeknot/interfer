@@ -48,7 +48,7 @@ On our M5 Max 128GB:
 
 ### Option A: Subprocess bridge (recommended first step)
 - Build flash-moe binary on the Mac
-- interfere calls it as a subprocess, pipes stdin/stdout
+- interfer calls it as a subprocess, pipes stdin/stdout
 - Parse SSE-like output into our existing token streaming protocol
 - Pros: Fastest path to running 397B locally, no code changes to flash-moe
 - Cons: Extra process, IPC overhead, limited control
@@ -56,7 +56,7 @@ On our M5 Max 128GB:
 ### Option B: HTTP wrapper around flash-moe
 - Write a thin C/Objective-C HTTP server around `infer.m`
 - Expose OpenAI-compatible /v1/chat/completions endpoint
-- interfere routes to it like any other model endpoint
+- interfer routes to it like any other model endpoint
 - Pros: Clean integration, standard API
 - Cons: Requires modifying flash-moe C code
 
@@ -94,5 +94,5 @@ Start with **Option A** (subprocess bridge) to validate performance on our hardw
 2. Download Qwen3.5-397B-A17B-4bit from HuggingFace (~209GB, several hours)
 3. Run extract_weights.py to prepare binary format
 4. Build and run `./infer` with timing to validate performance estimate
-5. If confirmed: implement subprocess bridge in interfere
+5. If confirmed: implement subprocess bridge in interfer
 6. Create interlab experiment campaign to measure quality vs cloud models

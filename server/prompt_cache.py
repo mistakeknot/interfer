@@ -66,7 +66,7 @@ class PromptCacheManager:
 
     Usage::
 
-        cache_mgr = PromptCacheManager(cache_dir="/tmp/interfere-cache")
+        cache_mgr = PromptCacheManager(cache_dir="/tmp/interfer-cache")
 
         # Check for cached prefix
         entry = cache_mgr.lookup(prompt_tokens, model_name="local:qwen3.5-35b")
@@ -80,7 +80,7 @@ class PromptCacheManager:
 
     def __init__(
         self,
-        cache_dir: str | Path = "/tmp/interfere-prompt-cache",
+        cache_dir: str | Path = "/tmp/interfer-prompt-cache",
         max_entries: int = 32,
         max_age_s: float = 3600.0,  # 1 hour default TTL
     ) -> None:

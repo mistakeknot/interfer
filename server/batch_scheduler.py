@@ -31,7 +31,7 @@ from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from enum import IntEnum
 
-log = logging.getLogger("interfere.batch")
+log = logging.getLogger("interfer.batch")
 
 
 class RequestPriority(IntEnum):

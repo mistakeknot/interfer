@@ -9,7 +9,7 @@ title: Researcher runs an early exit experiment campaign
 
 ## Actor
 
-**Experiment researcher** -- a developer or data scientist using interlab (the Sylveste experiment platform) to measure inference optimizations. They design campaigns with explicit baselines, treatments, success metrics, and kill criteria. In the interfere context, they are testing whether esoteric optimization techniques produce real speedups without quality regression.
+**Experiment researcher** -- a developer or data scientist using interlab (the Sylveste experiment platform) to measure inference optimizations. They design campaigns with explicit baselines, treatments, success metrics, and kill criteria. In the interfer context, they are testing whether esoteric optimization techniques produce real speedups without quality regression.
 
 ## Trigger
 
@@ -17,8 +17,8 @@ The researcher wants to measure the tok/s improvement from entropy-based early e
 
 ## Preconditions
 
-1. interfere server is running with a model loaded (e.g., Qwen3-30B Q4_K_M)
-2. interlab is installed and configured for interfere campaigns
+1. interfer server is running with a model loaded (e.g., Qwen3-30B Q4_K_M)
+2. interlab is installed and configured for interfer campaigns
 3. A representative task corpus exists: 100+ coding tasks spanning C1/C2 complexity tiers (the same distribution Clavain will route in production)
 4. interspect is available for quality scoring (or a quality evaluator is configured)
 5. Baseline performance numbers do not yet exist (this campaign will establish them)
@@ -33,7 +33,7 @@ The researcher wants to measure the tok/s improvement from entropy-based early e
    - **Kill criterion:** Quality score drops below 90% match rate, OR tok/s improvement is less than 1.1x (not worth the complexity)
    - **Sample size:** 100 tasks per arm (baseline and treatment), drawn from the representative corpus
 
-2. **Run baseline campaign.** With EarlyExitHook disabled (`enabled=False`), the researcher runs the full task corpus through interfere:
+2. **Run baseline campaign.** With EarlyExitHook disabled (`enabled=False`), the researcher runs the full task corpus through interfer:
    - Each task is sent to `/v1/chat/completions` as a streaming request
    - For each task, the researcher records: total tokens generated, wall-clock generation time (tok/s), TTFT, thermal state at start, and the full output text
    - The output text is scored for quality against reference outputs (cloud model baseline or human-validated gold set)

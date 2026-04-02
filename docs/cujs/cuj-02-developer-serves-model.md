@@ -2,14 +2,14 @@
 artifact_type: cuj
 stage: design
 cuj_id: CUJ-02
-title: Developer starts interfere and loads a model
+title: Developer starts interfer and loads a model
 ---
 
-# CUJ-02: Developer Starts interfere and Loads a Model
+# CUJ-02: Developer Starts interfer and Loads a Model
 
 ## Actor
 
-**Human developer** -- a Sylveste contributor or user who wants to run local inference on their Apple Silicon Mac. They interact with interfere directly via CLI and HTTP, outside of the Clavain orchestration loop.
+**Human developer** -- a Sylveste contributor or user who wants to run local inference on their Apple Silicon Mac. They interact with interfer directly via CLI and HTTP, outside of the Clavain orchestration loop.
 
 ## Trigger
 
@@ -19,15 +19,15 @@ The developer wants to use local models for development work -- testing prompts,
 
 1. Apple Silicon Mac with sufficient unified memory (M5 Max 128 GB recommended; smaller configs supported with smaller models)
 2. Python 3.12+ installed with `uv` available
-3. MLX and mlx-lm installed in the interfere virtual environment
+3. MLX and mlx-lm installed in the interfer virtual environment
 4. Network access to download model weights from HuggingFace (first run only; cached thereafter)
 5. No other process bound to port 8421
 
 ## Steps
 
-1. **Start the server.** The developer launches interfere:
+1. **Start the server.** The developer launches interfer:
    ```
-   uv run python -m interfere.server
+   uv run python -m interfer.server
    ```
    The Starlette HTTP server starts on `localhost:8421`. The MetalWorker subprocess is spawned with `multiprocessing.get_context("spawn")`, establishing the Metal GPU context in isolation. The default memory limit is set to 96 GiB (`mx.metal.set_memory_limit`), leaving headroom for the OS and HTTP process on a 128 GB machine.
 
@@ -47,7 +47,7 @@ The developer wants to use local models for development work -- testing prompts,
    ```
    Weights are cached in `~/.cache/huggingface/hub/`. Subsequent loads are instant.
 
-4. **Load the model.** The developer requests model loading via the interfere API (or the model loads lazily on first inference request). The ModelRegistry checks the memory budget:
+4. **Load the model.** The developer requests model loading via the interfer API (or the model loads lazily on first inference request). The ModelRegistry checks the memory budget:
    - Estimated model size (~18 GB for Q4_K_M of a 30B model) is validated against `available_memory_bytes`
    - If the budget allows, the model is registered and the InferenceEngine calls `mlx_lm.load()` inside the Metal worker subprocess
    - `mx.eval(model.parameters())` forces weight materialization so TTFT is not inflated by lazy loading
@@ -87,13 +87,13 @@ The developer wants to use local models for development work -- testing prompts,
 
 | Failure | Detection | Recovery |
 |---------|-----------|----------|
-| **Port 8421 already in use** | Server fails to bind on startup with `OSError: [Errno 48] Address already in use` | Kill the existing process on port 8421, or configure interfere to use a different port |
+| **Port 8421 already in use** | Server fails to bind on startup with `OSError: [Errno 48] Address already in use` | Kill the existing process on port 8421, or configure interfer to use a different port |
 | **MLX not installed** | ImportError when Metal worker subprocess starts | Install MLX: `uv pip install mlx mlx-lm` |
 | **Insufficient memory for model** | ModelRegistry raises MemoryError: loading exceeds budget | Choose a smaller model (e.g., 7B instead of 30B), or adjust memory_budget_bytes. Unload other models if any are loaded. |
 | **Model not found / download fails** | `mlx_lm.load()` raises FileNotFoundError or network error | Verify model name matches HuggingFace hub. Check network connectivity. Use `huggingface-cli download` to pre-cache. |
-| **Metal worker fails to spawn** | `MetalWorker.start()` raises; `is_alive()` returns False | Check that no other process holds the Metal context. Restart interfere. On rare occasions, a reboot is needed if Metal is in a bad state. |
+| **Metal worker fails to spawn** | `MetalWorker.start()` raises; `is_alive()` returns False | Check that no other process holds the Metal context. Restart interfer. On rare occasions, a reboot is needed if Metal is in a bad state. |
 | **Thermal throttle during load** | Model loading is slow; ThermalMonitor shows heavy pressure | Wait for thermal pressure to subside. Model loading is a one-time cost; generation performance will recover once thermal state is nominal. |
-| **Non-Apple-Silicon platform** | ThermalMonitor raises RuntimeError; MLX import fails | interfere requires Apple Silicon. For non-Mac development, use dry-run mode (`--dry-run`) which returns synthetic responses without MLX. |
+| **Non-Apple-Silicon platform** | ThermalMonitor raises RuntimeError; MLX import fails | interfer requires Apple Silicon. For non-Mac development, use dry-run mode (`--dry-run`) which returns synthetic responses without MLX. |
 
 ## Related Features
 

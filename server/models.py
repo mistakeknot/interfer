@@ -1,4 +1,4 @@
-"""Model loading and memory budget management for interfere."""
+"""Model loading and memory budget management for interfer."""
 
 from __future__ import annotations
 

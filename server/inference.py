@@ -1,4 +1,4 @@
-"""MLX inference engine for interfere.
+"""MLX inference engine for interfer.
 
 Runs inside the Metal subprocess — all MLX imports happen at method level
 so this module can be safely imported by the main (HTTP) process without

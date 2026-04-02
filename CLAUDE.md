@@ -1,4 +1,4 @@
-# interfere
+# interfer
 
 Local MLX-LM inference server for Apple Silicon M5 Max 128GB. Interverse companion plugin for Clavain.
 

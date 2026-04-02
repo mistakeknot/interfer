@@ -6,4 +6,4 @@ In practice, this means:
 
 - **Sovereignty**: Agents run without cloud dependencies for routine tasks. Sensitive code never leaves the machine.
 - **Frontier optimization**: The system actively seeks the Pareto frontier between cost, latency, and quality — not a static configuration, but a living system that adapts to workload patterns.
-- **Research platform**: Every inference technique — from entropy-based early exit to ant colony routing to speculative streaming — enters as a measured experiment with clear success criteria and kill conditions. interfere is where the esoteric becomes practical.
+- **Research platform**: Every inference technique — from entropy-based early exit to ant colony routing to speculative streaming — enters as a measured experiment with clear success criteria and kill conditions. interfer is where the esoteric becomes practical.

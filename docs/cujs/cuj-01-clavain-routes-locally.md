@@ -2,10 +2,10 @@
 artifact_type: cuj
 stage: design
 cuj_id: CUJ-01
-title: Clavain routes a C2 coding task to interfere
+title: Clavain routes a C2 coding task to interfer
 ---
 
-# CUJ-01: Clavain Routes a C2 Coding Task to interfere
+# CUJ-01: Clavain Routes a C2 Coding Task to interfer
 
 ## Actor
 
@@ -13,11 +13,11 @@ title: Clavain routes a C2 coding task to interfere
 
 ## Trigger
 
-A C2-complexity coding task arrives during sprint execution. C2 tasks are moderate-complexity work (refactoring, test writing, documentation generation) that do not require frontier-model reasoning. Clavain's routing engine evaluates this task against Track B5 (local inference via interfere) and determines it is a candidate for local execution.
+A C2-complexity coding task arrives during sprint execution. C2 tasks are moderate-complexity work (refactoring, test writing, documentation generation) that do not require frontier-model reasoning. Clavain's routing engine evaluates this task against Track B5 (local inference via interfer) and determines it is a candidate for local execution.
 
 ## Preconditions
 
-1. interfere server is running on `localhost:8421` and reports `status: ready` on `/health`
+1. interfer server is running on `localhost:8421` and reports `status: ready` on `/health`
 2. A model is loaded in the Metal worker (e.g., Qwen3-30B Q4_K_M, ~18 GB in unified memory)
 3. Clavain's `routing.yaml` has Track B5 enabled (mode: `shadow` or `enforce`)
 4. Thermal state is nominal or moderate (not heavy/trapping/sleeping)
@@ -31,10 +31,10 @@ A C2-complexity coding task arrives during sprint execution. C2 tasks are modera
 2. **Track B5 resolution.** Clavain's routing engine checks Track B5 eligibility. It evaluates:
    - Complexity tier: C2 is within the local-eligible range (C1/C2)
    - Privacy classification: the task's code is classified (public/internal/sensitive). Sensitive code is forced local regardless of complexity.
-   - Model availability: queries interfere `/health` to confirm a suitable model is loaded
-   - Thermal state: interfere reports thermal pressure via its health response
+   - Model availability: queries interfer `/health` to confirm a suitable model is loaded
+   - Thermal state: interfer reports thermal pressure via its health response
 
-3. **interfere API call.** Clavain sends a POST to `localhost:8421/v1/chat/completions` with:
+3. **interfer API call.** Clavain sends a POST to `localhost:8421/v1/chat/completions` with:
    - `model`: the loaded model identifier (e.g., `mlx-community/Qwen3-30B-A3B-4bit`)
    - `messages`: the chat-formatted coding prompt
    - `stream`: true (SSE streaming)
@@ -66,9 +66,9 @@ A C2-complexity coding task arrives during sprint execution. C2 tasks are modera
 | **Confidence too low** | EarlyExitHook reports low confidence; Clavain quality check fails | Cascade to cloud model. Record the local attempt as interspect evidence (quality=fail, cascade=true). |
 | **Thermal throttle** | ThermalMonitor reports `heavy`, `trapping`, or `sleeping` (raw_value >= 2) | Clavain suspends Track B5 routing until thermal state returns to nominal/moderate. In-flight requests complete but new requests route to cloud. |
 | **Queue backpressure** | PriorityRequestQueue raises QueueFullError (depth >= 64) | Clavain receives HTTP 503 or equivalent, routes to cloud. Alerts ops if sustained. |
-| **Metal worker crash** | MetalWorker.is_alive() returns False; health check times out | Clavain marks Track B5 unavailable. interfere attempts worker restart. All pending requests cascade to cloud. |
+| **Metal worker crash** | MetalWorker.is_alive() returns False; health check times out | Clavain marks Track B5 unavailable. interfer attempts worker restart. All pending requests cascade to cloud. |
 | **OOM in unified memory** | ModelRegistry.load() raises MemoryError; Metal memory limit exceeded | Model load rejected. Clavain routes to cloud. Operator may need to unload models or adjust memory_budget_bytes. |
-| **Network timeout** | Clavain's HTTP client times out waiting for interfere response | Cascade to cloud. Record timeout event for latency monitoring. |
+| **Network timeout** | Clavain's HTTP client times out waiting for interfer response | Cascade to cloud. Record timeout event for latency monitoring. |
 
 ## Related Features
 

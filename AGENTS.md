@@ -1,4 +1,4 @@
-# interfere — Development Guide
+# interfer — Development Guide
 
 Local MLX-LM inference server for Apple Silicon. Interverse companion plugin for Sylveste/Clavain.
 
@@ -30,7 +30,7 @@ Experiment Hooks (inside Metal subprocess):
 ## Server Startup
 
 ```bash
-cd interverse/interfere
+cd interverse/interfer
 uv run python -m server              # starts on port 8421 (MLX inference)
 uv run python -m server --dry-run    # dry-run mode (fake tokens, no MLX)
 uv run python -m server --port 9000  # custom port
@@ -55,7 +55,7 @@ curl http://localhost:8421/v1/chat/completions \
 Track B5 in `os/Clavain/config/routing.yaml`:
 - `mode: off` — no local routing
 - `mode: shadow` (current) — log what would route locally
-- `mode: enforce` — route eligible tasks to interfere
+- `mode: enforce` — route eligible tasks to interfer
 
 Complexity-to-model mapping (MoE-first, updated 2026-03-26):
 - C1 (trivial) → `local:qwen3.5-9b-4bit` (~5GB, ~60-80 tok/s)
@@ -94,7 +94,7 @@ Each experiment is toggled via config and tracked through interlab campaigns.
 ## Testing
 
 ```bash
-cd interverse/interfere
+cd interverse/interfer
 uv run pytest tests/ -v
 ```
 
@@ -115,6 +115,49 @@ Alternative high-end layout (when running gpt-oss-120b):
 ~5GB:   Draft model — Qwen3.5-9B-OptiQ 4-bit
 ~53GB:  KV cache pool + headroom
 ```
+
+Flash-MoE layout (Qwen3.5-397B-A17B via flash-moe binary):
+```
+~10GB:  macOS + system
+~6GB:   Model weights (mmap'd, 5.52GB)
+~35GB:  Expert cache — --malloc-cache 5000 (recommended, 7.1MB × 5000)
+~0.5GB: Metal GPU buffers (KV cache, delta-net state, attention)
+~76GB:  Remaining headroom
+```
+
+### Flash-MoE Configuration
+
+**Binary:** Anemll/flash-moe m5-nax branch (commit 26cd7f8) + pread zero-init fix.
+
+**Recommended: Q3 GGUF experts + cache-io-split 4** (best speed/quality tradeoff):
+
+```bash
+uv run python -m server \
+  --flashmoe-binary ~/projects/flash-moe/metal_infer/infer \
+  --flashmoe-model ~/Models/flash_mlx_4bit \
+  --flashmoe-q3-experts \
+  --flashmoe-cache-io-split 4 \
+  --flashmoe-gguf-embedding ~/Models/flash_mlx_4bit/gguf/embedding_q8_0.bin \
+  --flashmoe-gguf-lm-head ~/Models/flash_mlx_4bit/gguf/lm_head_q6.bin \
+  --flashmoe-malloc-cache 5000 \
+  --flashmoe-only
+```
+
+| Config | Decode | PPL | Expert size | Notes |
+|--------|--------|-----|-------------|-------|
+| Q3 GGUF + cache-io-split 4 | **12.9 tok/s** | 3.81 | 5.44 MB | Recommended |
+| 4-bit MLX (previous) | 9.5 tok/s | 3.64 | 6.75 MB | ~36% slower |
+| 4-bit + malloc-cache 5000 | 2.5 tok/s | 3.64 | 6.75 MB | Old config, obsolete |
+| 2-bit MLX | 14.5 tok/s | 5.71 | 3.75 MB | Fast but PPL degrades |
+
+**New CLI flags (m5-nax upstream):**
+- `--flashmoe-q3-experts` — Use Unsloth IQ3_XXS experts (23% smaller, 36% faster)
+- `--flashmoe-cache-io-split N` — Page-aligned pread fanout (4 recommended)
+- `--flashmoe-gguf-embedding PATH` — Q8_0 embedding overlay (quality boost, free)
+- `--flashmoe-gguf-lm-head PATH` — Q6_K LM head overlay (quality boost, free)
+
+**GGUF overlay setup:** See `~/projects/flash-moe/docs/model-download-and-convert.md`
+for extraction scripts. Q3 experts come pre-packed in `packed_experts_Q3/`.
 
 ## Dependencies
 

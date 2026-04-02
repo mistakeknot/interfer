@@ -1,4 +1,4 @@
-"""End-to-end streaming test for interfere server."""
+"""End-to-end streaming test for interfer server."""
 
 from __future__ import annotations
 
@@ -49,4 +49,4 @@ async def test_e2e_streaming_with_dry_run() -> None:
             full_text = "".join(
                 c["choices"][0]["delta"]["content"] for c in content_chunks
             )
-            assert "interfere" in full_text.lower() or "hello" in full_text.lower()
+            assert "interfer" in full_text.lower() or "hello" in full_text.lower()

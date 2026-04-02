@@ -1,4 +1,4 @@
-# interfere — Vision
+# interfer — Vision
 
 **Last updated:** 2026-03-26
 **Mission:** [`MISSION.md`](../MISSION.md)
@@ -6,7 +6,7 @@
 
 ## The Big Idea
 
-The M5 Max with 128GB unified memory is the inflection point where local models match cloud quality for 60-70% of coding tasks at zero marginal cost. interfere is the layer that makes this real for Sylveste — a custom MLX-LM inference server that owns the full computation pipeline, enabling optimizations impossible in off-the-shelf serving frameworks. It's not just a local Ollama replacement; it's a research-grade inference laboratory where techniques from computational neuroscience, swarm intelligence, and information theory are tested against production workloads and either proven or killed.
+The M5 Max with 128GB unified memory is the inflection point where local models match cloud quality for 60-70% of coding tasks at zero marginal cost. interfer is the layer that makes this real for Sylveste — a custom MLX-LM inference server that owns the full computation pipeline, enabling optimizations impossible in off-the-shelf serving frameworks. It's not just a local Ollama replacement; it's a research-grade inference laboratory where techniques from computational neuroscience, swarm intelligence, and information theory are tested against production workloads and either proven or killed.
 
 ## Design Principles
 
@@ -54,7 +54,7 @@ The M5 Max with 128GB unified memory is the inflection point where local models 
 | **interspect** | Evidence collector — tracks local model quality | Canary system extended for local model evidence |
 | **interlab** | Experiment platform — runs A/B campaigns | Each esoteric technique is an interlab campaign |
 | **interrank** | Model benchmarker — compares model quality | Registers local models in AgMoDB snapshot |
-| **interflux** | Review system — 10 custom fd-* agents for interfere | 5 landscape + 5 implementation review agents |
+| **interflux** | Review system — 10 custom fd-* agents for interfer | 5 landscape + 5 implementation review agents |
 
 ## What We Believe
 
@@ -64,6 +64,6 @@ The M5 Max with 128GB unified memory is the inflection point where local models 
 
 **Bet 3: The efficiency/quality frontier is dynamic.** New models, new quantization methods, and new hardware generations continuously shift what's optimal. A system that measures and adapts (via interspect evidence + interlab experiments) will outperform static routing over time.
 
-**Bet 4: Cross-disciplinary techniques transfer.** Ant colony optimization, reservoir computing, active inference, and Hebbian learning have concrete implementations that are not just metaphors. At least 3 of the 13 planned experiments will produce measurable improvements. If fewer than 2 work, the "inference laboratory" thesis is wrong and interfere should simplify to a conventional local serving layer.
+**Bet 4: Cross-disciplinary techniques transfer.** Ant colony optimization, reservoir computing, active inference, and Hebbian learning have concrete implementations that are not just metaphors. At least 3 of the 13 planned experiments will produce measurable improvements. If fewer than 2 work, the "inference laboratory" thesis is wrong and interfer should simplify to a conventional local serving layer.
 
-**Risk:** MLX's lack of concurrent inference (ml-explore/mlx#3078) is the biggest technical constraint. If this isn't resolved by H2 2026, the multi-agent throughput ceiling limits interfere's value for parallel subagent workloads.
+**Risk:** MLX's lack of concurrent inference (ml-explore/mlx#3078) is the biggest technical constraint. If this isn't resolved by H2 2026, the multi-agent throughput ceiling limits interfer's value for parallel subagent workloads.

@@ -1,4 +1,4 @@
-"""Tests for the interfere HTTP server."""
+"""Tests for the interfer HTTP server."""
 
 from __future__ import annotations
 

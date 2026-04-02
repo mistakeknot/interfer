@@ -48,9 +48,9 @@ Wire ConfidenceCascade into the `/v1/chat/completions` handler. When enabled (vi
 **Effort:** Small
 
 Create the `server/mcp.py` that plugin.json references. Minimal tools:
-- `interfere_health` — return server health + thermal + loaded models
-- `interfere_generate` — proxy to /v1/chat/completions
-- `interfere_models` — list available/loaded models
+- `interfer_health` — return server health + thermal + loaded models
+- `interfer_generate` — proxy to /v1/chat/completions
+- `interfer_models` — list available/loaded models
 
 ### Task 6: Steady-state smoke test (P1)
 **Files:** No new files — operational

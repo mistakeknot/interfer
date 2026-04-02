@@ -79,8 +79,8 @@ Option A." The 86% gap far exceeds this threshold.
 - Expert repacking: 60 layers, 203 GB, verified
 
 **Recommended next step**: Option C — hybrid approach. Use flash-moe as the inference
-backend (it already achieves 11.1 tok/s), and use interfere as the HTTP server that
-proxies to flash-moe's `--serve` mode. This preserves interfere's API compatibility,
+backend (it already achieves 11.1 tok/s), and use interfer as the HTTP server that
+proxies to flash-moe's `--serve` mode. This preserves interfer's API compatibility,
 cascade routing, and experiment hooks while leveraging flash-moe's Metal performance.
 
 ## Raw Data

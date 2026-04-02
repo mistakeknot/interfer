@@ -137,9 +137,9 @@ May need Q3 quantization for viable performance.
 ### Task 3.2: Prometheus metrics for streaming
 
 Add to prom.py:
-- `interfere_ssd_pread_bytes_total` (counter)
-- `interfere_expert_cache_hit_rate` (gauge, from vm_stat sampling)
-- `interfere_streaming_io_seconds` (histogram, per-layer I/O time)
+- `interfer_ssd_pread_bytes_total` (counter)
+- `interfer_expert_cache_hit_rate` (gauge, from vm_stat sampling)
+- `interfer_streaming_io_seconds` (histogram, per-layer I/O time)
 
 ### Task 3.3: Cascade integration
 
@@ -157,7 +157,7 @@ Log to `local_routing_shadow` table with actual model used and tok/s achieved.
 ### Task 4.1: flash-moe subprocess benchmark harness
 
 Use flash-moe's `--serve PORT` HTTP/SSE mode as a reference ceiling.
-interfere proxies to it for A/B comparison.
+interfer proxies to it for A/B comparison.
 
 ### Task 4.2: Upstream contribution (Option E)
 

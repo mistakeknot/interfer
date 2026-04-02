@@ -155,7 +155,7 @@ def print_profile(summary: dict) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        prog="interfere-confidence-profile",
+        prog="interfer-confidence-profile",
         description="Profile per-token confidence distributions",
     )
     parser.add_argument("--model", required=True, help="Model path or HF ID")

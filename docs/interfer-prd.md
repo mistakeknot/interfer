@@ -3,7 +3,7 @@ artifact_type: prd
 stage: design
 ---
 
-# interfere -- Product Requirements Document
+# interfer -- Product Requirements Document
 
 **Version:** 0.1.0
 **Date:** 2026-03-26
@@ -17,12 +17,12 @@ Sylveste agents (orchestrated by Clavain) depend entirely on cloud LLM APIs for 
 2. **Privacy leakage.** Sensitive code (.env-adjacent files, internal APIs, credentials handling) is sent to third-party endpoints. There is no mechanism to keep private code local.
 3. **Latency and availability.** Cloud round-trips add latency to every agent action. Outages and rate limits halt all agent work simultaneously.
 
-The M5 Max with 128GB unified memory is the inflection point where local models can match cloud quality for 60-70% of coding tasks at zero marginal cost. interfere is the inference layer that makes this real -- a custom MLX-LM server that owns the full computation pipeline, enabling optimizations (early exit, reservoir routing, thermal scheduling) impossible in off-the-shelf serving frameworks.
+The M5 Max with 128GB unified memory is the inflection point where local models can match cloud quality for 60-70% of coding tasks at zero marginal cost. interfer is the inference layer that makes this real -- a custom MLX-LM server that owns the full computation pipeline, enabling optimizations (early exit, reservoir routing, thermal scheduling) impossible in off-the-shelf serving frameworks.
 
 ## 2. Users and Personas
 
 ### Clavain Orchestrator (primary)
-The autonomous routing layer that decides which model handles which task. Clavain needs an OpenAI-compatible endpoint it can route to via Track B5, with confidence scores to drive cascade decisions (try local, escalate to cloud if confidence < threshold). Clavain never interacts with interfere's internals -- only the API contract matters.
+The autonomous routing layer that decides which model handles which task. Clavain needs an OpenAI-compatible endpoint it can route to via Track B5, with confidence scores to drive cascade decisions (try local, escalate to cloud if confidence < threshold). Clavain never interacts with interfer's internals -- only the API contract matters.
 
 ### Human Developer (secondary)
 The person running Sylveste on their Mac. They care about: the system not crashing their machine (OOM kernel panics), not throttling due to thermal pressure, and seeing cost savings vs cloud. They interact via health endpoints, cost dashboards, and thermal status. They may also curl the endpoint directly for ad-hoc local inference.
@@ -34,7 +34,7 @@ The developer designing and running interlab campaigns on the inference pipeline
 
 ### F1: OpenAI-Compatible Local Inference Server
 
-Serve local MLX models through a standard `/v1/chat/completions` endpoint with SSE streaming. Any client that speaks OpenAI protocol can use interfere as a drop-in backend.
+Serve local MLX models through a standard `/v1/chat/completions` endpoint with SSE streaming. Any client that speaks OpenAI protocol can use interfer as a drop-in backend.
 
 **Requirements:**
 - POST `/v1/chat/completions` with streaming (SSE) and non-streaming responses
@@ -50,7 +50,7 @@ Serve local MLX models through a standard `/v1/chat/completions` endpoint with S
 
 ### F2: Clavain Track B5 Integration
 
-Enable Clavain to route tasks to interfere based on complexity tier, confidence, and privacy classification.
+Enable Clavain to route tasks to interfer based on complexity tier, confidence, and privacy classification.
 
 **Requirements:**
 - Track B5 modes: `off` (no local routing), `shadow` (log decisions only), `enforce` (route eligible tasks)
@@ -133,14 +133,14 @@ Persist KV cache state across requests and sessions to reduce time-to-first-toke
 
 ## 4. Non-Goals
 
-interfere explicitly does NOT:
+interfer explicitly does NOT:
 
-- **Replace cloud models for complex tasks.** C3+ tasks, novel architecture decisions, and safety-critical reviews stay on cloud frontier models. interfere handles the volume, not the ceiling.
-- **Support non-Apple hardware.** MLX is Apple Silicon only. No CUDA, no ROCm, no CPU fallback. If you don't have an M-series Mac, interfere is not for you.
+- **Replace cloud models for complex tasks.** C3+ tasks, novel architecture decisions, and safety-critical reviews stay on cloud frontier models. interfer handles the volume, not the ceiling.
+- **Support non-Apple hardware.** MLX is Apple Silicon only. No CUDA, no ROCm, no CPU fallback. If you don't have an M-series Mac, interfer is not for you.
 - **Serve multiple users.** This is a single-machine, single-developer inference server. No multi-tenancy, no auth, no rate limiting beyond backpressure.
-- **Train or fine-tune models.** interfere serves inference. Training, fine-tuning, and adapter optimization are out of scope (future: adapter hot-loading may be added).
-- **Compete with Ollama/vllm-mlx for general use.** interfere exists because those tools don't expose the hooks needed for early exit, reservoir routing, and thermal scheduling. If the community adds these features, interfere may simplify or deprecate.
-- **Provide a UI.** All interaction is API-first. Dashboards (cost, thermal, experiments) are consumed by other Sylveste components, not rendered by interfere.
+- **Train or fine-tune models.** interfer serves inference. Training, fine-tuning, and adapter optimization are out of scope (future: adapter hot-loading may be added).
+- **Compete with Ollama/vllm-mlx for general use.** interfer exists because those tools don't expose the hooks needed for early exit, reservoir routing, and thermal scheduling. If the community adds these features, interfer may simplify or deprecate.
+- **Provide a UI.** All interaction is API-first. Dashboards (cost, thermal, experiments) are consumed by other Sylveste components, not rendered by interfer.
 
 ## 5. Success Metrics
 
@@ -173,4 +173,4 @@ interfere explicitly does NOT:
 
 ### Critical Constraint
 
-MLX does not support concurrent inference (`ml-explore/mlx#3078`). All requests are serialized through a priority queue. If this limitation is not resolved by H2 2026, multi-agent throughput will be capped, limiting interfere's value for parallel subagent workloads.
+MLX does not support concurrent inference (`ml-explore/mlx#3078`). All requests are serialized through a priority queue. If this limitation is not resolved by H2 2026, multi-agent throughput will be capped, limiting interfer's value for parallel subagent workloads.

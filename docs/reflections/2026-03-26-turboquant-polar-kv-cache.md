@@ -8,7 +8,7 @@ stage: reflect
 
 ## What happened
 
-Implemented a polar coordinate transformation experiment for KV cache quantization in interfere. The plan review (3 agents: correctness, performance, architecture) caught a critical storage math error before any code was written — the original custom `TurboQuantCache` design stored ~12 bits/element (not 3), and the dequantize-on-fetch pattern would have been O(seq_len) per token. Pivoted to a fundamentally simpler approach: `PolarCacheWrapper` that wraps mlx-lm's native `QuantizedKVCache`, applying polar transform before storage and inverse after retrieval. The fused attention kernel handles decompression — zero custom dequantize overhead.
+Implemented a polar coordinate transformation experiment for KV cache quantization in interfer. The plan review (3 agents: correctness, performance, architecture) caught a critical storage math error before any code was written — the original custom `TurboQuantCache` design stored ~12 bits/element (not 3), and the dequantize-on-fetch pattern would have been O(seq_len) per token. Pivoted to a fundamentally simpler approach: `PolarCacheWrapper` that wraps mlx-lm's native `QuantizedKVCache`, applying polar transform before storage and inverse after retrieval. The fused attention kernel handles decompression — zero custom dequantize overhead.
 
 ## Key learnings
 

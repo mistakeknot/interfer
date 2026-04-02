@@ -7,7 +7,7 @@ stage: design
 
 ## Problem
 
-interfere's KV cache quantization uses mlx-lm's built-in uniform bit-width scheme (2/4/8-bit), which trades quality for memory savings. At 2-bit, quality degrades noticeably on long-context tasks. The planned Q8K/Q4V approach (Sylveste-dw8) improves this but still uses 4-8 effective bits. TurboQuant (ICLR 2026) achieves 3-bit quantization with zero accuracy loss via polar coordinate mapping + JL residual correction — strictly better.
+interfer's KV cache quantization uses mlx-lm's built-in uniform bit-width scheme (2/4/8-bit), which trades quality for memory savings. At 2-bit, quality degrades noticeably on long-context tasks. The planned Q8K/Q4V approach (Sylveste-dw8) improves this but still uses 4-8 effective bits. TurboQuant (ICLR 2026) achieves 3-bit quantization with zero accuracy loss via polar coordinate mapping + JL residual correction — strictly better.
 
 ## Solution
 
@@ -32,7 +32,7 @@ Implement TurboQuant as an experiment module (`server/experiments/turbo_quant.py
 - [ ] QJL can be independently toggled (PolarQuant works without it)
 
 ### F3: Experiment Module Integration
-**What:** Wire TurboQuant into interfere's experiment framework with config, inference hook, and metrics.
+**What:** Wire TurboQuant into interfer's experiment framework with config, inference hook, and metrics.
 **Acceptance criteria:**
 - [ ] Config block in `defaults.yaml` under `turbo_quant:` with `enabled`, `grid_size`, `qjl_dim`, `qjl_enabled` params
 - [ ] Env var overrides: `INTERFERE_EXP_TURBO_QUANT_ENABLED=true`, etc.

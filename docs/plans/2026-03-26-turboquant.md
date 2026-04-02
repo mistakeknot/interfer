@@ -1,7 +1,7 @@
 ---
 artifact_type: plan
 bead: Sylveste-4dy
-prd: interverse/interfere/docs/prds/2026-03-26-turboquant.md
+prd: interverse/interfer/docs/prds/2026-03-26-turboquant.md
 features:
   - Sylveste-fsj  # F1: PolarQuant core
   - Sylveste-60j  # F2: QJL residual correction
@@ -278,7 +278,7 @@ Same as original plan with these fixes from review:
 
 ### Task 5: Autoresearch scaffold (Sylveste-m0m)
 
-**File:** `interlab-turboquant-tune.sh` (new, in interfere root)
+**File:** `interlab-turboquant-tune.sh` (new, in interfer root)
 
 Build the interlab benchmark script that the autoresearch campaign will invoke:
 

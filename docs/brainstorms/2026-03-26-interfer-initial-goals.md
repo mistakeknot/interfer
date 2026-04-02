@@ -4,7 +4,7 @@ bead: none
 stage: discover
 ---
 
-# interfere — Initial Goals (March-April 2026)
+# interfer — Initial Goals (March-April 2026)
 
 ## Goal 1: Ship the Server End-to-End
 Wire the Metal worker subprocess to the inference engine. Serve a real model (Qwen3-30B Q4_K_M). Verify Clavain can route to it in Track B5 shadow mode. Measure baseline tok/s and quality on Clavain's actual task distribution.

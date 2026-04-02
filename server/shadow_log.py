@@ -5,7 +5,7 @@ interstat's local_routing_shadow table. This data feeds sprint cost
 summaries showing how much cloud spend was avoided by local routing.
 
 The logger writes directly to SQLite (not via hooks) since it runs
-inside the interfere server process, not a Claude Code session.
+inside the interfer server process, not a Claude Code session.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-log = logging.getLogger("interfere.shadow_log")
+log = logging.getLogger("interfer.shadow_log")
 
 # Default cloud model used for cost estimation when no specific model is known
 DEFAULT_CLOUD_MODEL = "claude-sonnet-4-6"

@@ -1,4 +1,4 @@
-"""Prometheus metric instruments for interfere.
+"""Prometheus metric instruments for interfer.
 
 All instruments are module-level singletons registered in the default
 CollectorRegistry.  Import and use them from request handlers; call
@@ -11,7 +11,7 @@ from prometheus_client import Counter, Gauge, Histogram, generate_latest
 
 # -- Request latency (time-to-first-byte, not end-to-end streaming) ----------
 REQUEST_LATENCY = Histogram(
-    "interfere_request_latency_seconds",
+    "interfer_request_latency_seconds",
     "Time from request receipt to SSE stream start",
     labelnames=["model"],
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
@@ -19,59 +19,59 @@ REQUEST_LATENCY = Histogram(
 
 # -- Token throughput ---------------------------------------------------------
 TOKENS_GENERATED = Counter(
-    "interfere_tokens_generated_total",
+    "interfer_tokens_generated_total",
     "Cumulative tokens generated across all requests",
     labelnames=["model"],
 )
 
 # -- In-flight requests -------------------------------------------------------
 ACTIVE_REQUESTS = Gauge(
-    "interfere_active_requests",
+    "interfer_active_requests",
     "Number of currently in-flight chat completion requests",
 )
 
 # -- macOS thermal pressure (0=nominal … 4=sleeping) -------------------------
 THERMAL_LEVEL = Gauge(
-    "interfere_thermal_level",
+    "interfer_thermal_level",
     "macOS thermal pressure as integer (0=nominal, 1=moderate, 2=heavy, 3=trapping, 4=sleeping)",
 )
 
 # -- GPU memory ---------------------------------------------------------------
 GPU_MEMORY_BYTES = Gauge(
-    "interfere_gpu_memory_bytes",
+    "interfer_gpu_memory_bytes",
     "Metal GPU memory usage in bytes",
     labelnames=["type"],  # active, peak
 )
 
 # -- Error counter ------------------------------------------------------------
 ERRORS_TOTAL = Counter(
-    "interfere_errors_total",
+    "interfer_errors_total",
     "Total error count by type",
     labelnames=["error_type"],
 )
 
 # -- Cascade decision routing -------------------------------------------------
 CASCADE_DECISIONS = Counter(
-    "interfere_cascade_decisions_total",
+    "interfer_cascade_decisions_total",
     "Cascade routing decisions by outcome",
     labelnames=["outcome"],  # accept, escalate, cloud
 )
 
 # -- Quality composite --------------------------------------------------------
 QUALITY_COMPOSITE = Gauge(
-    "interfere_quality_composite",
+    "interfer_quality_composite",
     "Latest composite quality score from the quality scorer",
 )
 
 QUALITY_HISTOGRAM = Histogram(
-    "interfere_quality_score",
+    "interfer_quality_score",
     "Distribution of composite quality scores per model",
     labelnames=["model"],
     buckets=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0),
 )
 
 QUALITY_PERPLEXITY = Histogram(
-    "interfere_quality_perplexity",
+    "interfer_quality_perplexity",
     "Distribution of perplexity per model (lower is better)",
     labelnames=["model"],
     buckets=(1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 500.0),
@@ -79,7 +79,7 @@ QUALITY_PERPLEXITY = Histogram(
 
 # -- Total request counter (coarse status buckets) ----------------------------
 REQUEST_COUNT = Counter(
-    "interfere_requests_total",
+    "interfer_requests_total",
     "Total HTTP requests by status class",
     labelnames=["status"],  # 2xx, 4xx, 5xx
 )
@@ -96,20 +96,20 @@ THERMAL_LEVEL_MAP: dict[str, int] = {
 
 # -- Queue depth ---------------------------------------------------------------
 QUEUE_DEPTH = Gauge(
-    "interfere_queue_depth",
+    "interfer_queue_depth",
     "Number of requests currently waiting in the inference queue",
 )
 
 # -- Queue wait time -----------------------------------------------------------
 QUEUE_WAIT_SECONDS = Histogram(
-    "interfere_queue_wait_seconds",
+    "interfer_queue_wait_seconds",
     "Time spent waiting in the inference queue before processing starts",
     buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0),
 )
 
 # -- Rejected requests ---------------------------------------------------------
 REJECTED_TOTAL = Counter(
-    "interfere_rejected_total",
+    "interfer_rejected_total",
     "Requests rejected by admission control",
     labelnames=["reason"],  # thermal, queue_full
 )

@@ -6,7 +6,7 @@ per layer per token, using OS pread() directly into mx.array memoryview
 for zero-copy NVMe→GPU transfer.
 
 Usage (standalone benchmark):
-    cd interverse/interfere
+    cd interverse/interfer
     uv run python -m server.streaming_switch \\
         --model ~/Models/mlx-community-Qwen3.5-397B-A17B-4bit \\
         --packed-experts ~/Models/mlx-community-Qwen3.5-397B-A17B-4bit/packed_experts \\

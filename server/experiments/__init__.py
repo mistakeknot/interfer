@@ -1,1 +1,1 @@
-"""Experiment hooks for interfere inference pipeline."""
+"""Experiment hooks for interfer inference pipeline."""

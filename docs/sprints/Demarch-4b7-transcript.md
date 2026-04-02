@@ -433,7 +433,7 @@ I'll start the sprint for Demarch-4b7. Let me bootstrap the environment first.
 
 **Sprint Initialized:**
 - **Bead:** Demarch-4b7
-- **Title:** [interfere] Autoresearch: reservoir routing MLP architecture tuning
+- **Title:** [interfer] Autoresearch: reservoir routing MLP architecture tuning
 - **Complexity:** C3 → **Autonomy: Tier 2** (one checkpoint after plan review)
 - **No checkpoint** — starting fresh
 
@@ -729,7 +729,7 @@ This is a Tier 2 sprint with clear requirements. The bead already specifies acce
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/reservoir_routing.py]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/reservoir_routing.py]
 
 ---
 
@@ -739,7 +739,7 @@ This is a Tier 2 sprint with clear requirements. The bead already specifies acce
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/AGENTS.md]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/AGENTS.md]
 
 ---
 
@@ -765,19 +765,19 @@ Good. The bead requirements are crystal clear. This is a Tier 2 sprint — requi
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/config.py]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/config.py]
 
 ---
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/defaults.yaml]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/defaults.yaml]
 
 ---
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/server/inference.py]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/server/inference.py]
 
 ---
 
@@ -1327,7 +1327,7 @@ Strategy Progress:
 Strategy complete!
 
 PRD: docs/prds/2026-03-26-reservoir-routing-autoresearch.md
-Epic: Demarch-4b7 — [interfere] Autoresearch: reservoir routing MLP architecture tuning
+Epic: Demarch-4b7 — [interfer] Autoresearch: reservoir routing MLP architecture tuning
 Features:
   - Demarch-dbc: F1 — Reservoir routing training data generator [P2]
   - Demarch-dp1: F2 — Reservoir routing evaluation harness [P2]
@@ -1410,13 +1410,13 @@ Now let me invoke the writing-plans skill. Let me read the PRD as primary input 
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/reservoir_routing.py]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/reservoir_routing.py]
 
 ---
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/server/inference.py]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/server/inference.py]
 
 ---
 
@@ -2038,7 +2038,7 @@ The `generate_training_data` signature uses `label_scheme: str = "3class"`. Stri
 
 **Shell script location**
 
-The plan places `interlab-reservoir-tune.sh` in `interverse/interfere/interlab-reservoir-tune.sh` (repo root of the subproject). Existing shell tooling convention is not visible from the files read, but placing it alongside the Python source rather than in a `scripts/` or `bin/` subdirectory will cause clutter if more experiments follow. This is low priority but worth standardizing now.
+The plan places `interlab-reservoir-tune.sh` in `interverse/interfer/interlab-reservoir-tune.sh` (repo root of the subproject). Existing shell tooling convention is not visible from the files read, but placing it alongside the Python source rather than in a `scripts/` or `bin/` subdirectory will cause clutter if more experiments follow. This is low priority but worth standardizing now.
 
 ---
 
@@ -2188,7 +2188,7 @@ T4 places the reservoir hook call *before* the `stream_generate` loop:
 
 > In `generate()`, before the stream_generate loop: ... `hidden = extract_hidden_state(model, tokens, tap_layer)`
 
-The existing `generate()` method in `/Users/sma/projects/Demarch/interverse/interfere/server/inference.py` calls `stream_generate` as the top-level operation. The plan inserts `extract_hidden_state` before that loop, which means two MLX operations exist in the same function call: the hidden state forward pass and then `stream_generate`.
+The existing `generate()` method in `/Users/sma/projects/Demarch/interverse/interfer/server/inference.py` calls `stream_generate` as the top-level operation. The plan inserts `extract_hidden_state` before that loop, which means two MLX operations exist in the same function call: the hidden state forward pass and then `stream_generate`.
 
 The AGENTS.md invariant is "No concurrent MLX inference (ml-explore/mlx#3078) — we use a priority queue with sequential processing." The issue is not concurrency between requests (the queue handles that) — it is that `extract_hidden_state` issues its own forward pass through layers `[:tap_layer]`, and then `stream_generate` issues its own full forward pass through all layers independently. These are sequential, not concurrent, so the mutex concern does not apply here.
 
@@ -2262,10 +2262,10 @@ T6 says the shell wrapper "accepts hyperparams as env vars, runs Python training
 The two issues most likely to cause a 3 AM wake-up are **Finding 3** (the `cache=None` AttributeError that crashes the Metal subprocess on the first production model request, taking down the whole server) and **Finding 1** (the weight shape mismatch that silently disables routing for any session where `num_models` config drifts from the trained label scheme).
 
 Relevant files:
-- `/Users/sma/projects/Demarch/interverse/interfere/server/inference.py` — where T4 hook insertion goes; see `generate()` at line 131
-- `/Users/sma/projects/Demarch/interverse/interfere/server/experiments/reservoir_routing.py` — `ReservoirReadout`; `num_models` must match label scheme
-- `/Users/sma/projects/Demarch/interverse/interfere/server/experiments/defaults.yaml` — canonical source for `num_models: 4` and `layer: 24`
-- `/Users/sma/projects/Demarch/interverse/interfere/server/experiments/config.py` — config loader; `num_models` flows from here into `_init_hooks`</result>
+- `/Users/sma/projects/Demarch/interverse/interfer/server/inference.py` — where T4 hook insertion goes; see `generate()` at line 131
+- `/Users/sma/projects/Demarch/interverse/interfer/server/experiments/reservoir_routing.py` — `ReservoirReadout`; `num_models` must match label scheme
+- `/Users/sma/projects/Demarch/interverse/interfer/server/experiments/defaults.yaml` — canonical source for `num_models: 4` and `layer: 24`
+- `/Users/sma/projects/Demarch/interverse/interfer/server/experiments/config.py` — config loader; `num_models` flows from here into `_init_hooks`</result>
 <usage><total_tokens>38004</total_tokens><tool_uses>12</tool_uses><duration_ms>132506</duration_ms></usage>
 </task-notification>
 Full transcript available at: /private/tmp/claude-501/-Users-sma-projects-Demarch/7473ec9e-d6fc-4250-b129-93064c1727d6/tasks/a13dbc8880c9ca324.output
@@ -2401,9 +2401,9 @@ The T4 wiring then reads from `captured["h"]` after the first `next()` call on t
 
 Relevant files:
 - `/Users/sma/projects/Demarch/docs/plans/2026-03-26-reservoir-routing-autoresearch.md` (T3, T4, T5 sections)
-- `/Users/sma/projects/Demarch/interverse/interfere/server/inference.py` (lines 131–243, the generate() method where T4 wires in)
-- `/Users/sma/projects/Demarch/interverse/interfere/server/experiments/reservoir_routing.py` (the ReservoirReadout class that T3 extends)
-- `/Users/sma/projects/Demarch/interverse/interfere/AGENTS.md` (memory budget and MoE active-parameter context)</result>
+- `/Users/sma/projects/Demarch/interverse/interfer/server/inference.py` (lines 131–243, the generate() method where T4 wires in)
+- `/Users/sma/projects/Demarch/interverse/interfer/server/experiments/reservoir_routing.py` (the ReservoirReadout class that T3 extends)
+- `/Users/sma/projects/Demarch/interverse/interfer/AGENTS.md` (memory budget and MoE active-parameter context)</result>
 <usage><total_tokens>41229</total_tokens><tool_uses>17</tool_uses><duration_ms>134889</duration_ms></usage>
 </task-notification>
 Full transcript available at: /private/tmp/claude-501/-Users-sma-projects-Demarch/7473ec9e-d6fc-4250-b129-93064c1727d6/tasks/a76d9fd7526d8db77.output
@@ -2536,7 +2536,7 @@ Gate passed. Starting execution. The plan has T1, T2, T3 as independent tasks th
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/reservoir_routing.py]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/reservoir_routing.py]
 
 ---
 
@@ -2552,7 +2552,7 @@ Now I'll execute the prereq + T2 (both modify the same file), then T1 and T3 in 
 
 ## 🤖 Assistant
 
-[Tool: Write - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/reservoir_routing.py]
+[Tool: Write - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/reservoir_routing.py]
 
 ---
 
@@ -2568,7 +2568,7 @@ Wait — I need `ReservoirReadout` to still inherit from `nn.Module` for `save_w
 
 ## 🤖 Assistant
 
-[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/reservoir_routing.py]
+[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/reservoir_routing.py]
 
 ---
 
@@ -2586,7 +2586,7 @@ Let me simplify back to the clean approach:
 
 ## 🤖 Assistant
 
-[Tool: Write - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/reservoir_routing.py]
+[Tool: Write - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/reservoir_routing.py]
 
 ---
 
@@ -2618,7 +2618,7 @@ Existing test passes. Now execute T1 (training data) and T3 (hidden state extrac
 
 ## 🤖 Assistant
 
-[Tool: Write - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/training_data.py]
+[Tool: Write - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/training_data.py]
 
 ---
 
@@ -2634,7 +2634,7 @@ Now T3 (hidden state extraction) and T5 (training script):
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/server/inference.py]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/server/inference.py]
 
 ---
 
@@ -2650,7 +2650,7 @@ Now let me implement T3 and T4 together in `inference.py`:
 
 ## 🤖 Assistant
 
-[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfere/server/inference.py]
+[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfer/server/inference.py]
 
 ---
 
@@ -2666,7 +2666,7 @@ Now add the `_extract_hidden_state` method and wire it into `generate()`:
 
 ## 🤖 Assistant
 
-[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfere/server/inference.py]
+[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfer/server/inference.py]
 
 ---
 
@@ -2682,7 +2682,7 @@ Now wire the reservoir hook into `generate()`:
 
 ## 🤖 Assistant
 
-[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfere/server/inference.py]
+[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfer/server/inference.py]
 
 ---
 
@@ -2698,7 +2698,7 @@ Now update `defaults.yaml` to add the new fields:
 
 ## 🤖 Assistant
 
-[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/defaults.yaml]
+[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/defaults.yaml]
 
 ---
 
@@ -2714,7 +2714,7 @@ Now T5 — the training script:
 
 ## 🤖 Assistant
 
-[Tool: Write - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/train_reservoir.py]
+[Tool: Write - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/train_reservoir.py]
 
 ---
 
@@ -2740,7 +2740,7 @@ Now T6 — the evaluation harness shell script:
 
 ## 🤖 Assistant
 
-[Tool: Write - /Users/sma/projects/Demarch/interverse/interfere/scripts/interlab-reservoir-tune.sh]
+[Tool: Write - /Users/sma/projects/Demarch/interverse/interfer/scripts/interlab-reservoir-tune.sh]
 
 ---
 
@@ -2776,7 +2776,7 @@ Now let me write the tests (T7) and run them:
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/tests/test_reservoir_routing.py]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/tests/test_reservoir_routing.py]
 
 ---
 
@@ -2786,7 +2786,7 @@ Now let me write the tests (T7) and run them:
 
 ## 🤖 Assistant
 
-[Tool: Write - /Users/sma/projects/Demarch/interverse/interfere/tests/test_reservoir_routing.py]
+[Tool: Write - /Users/sma/projects/Demarch/interverse/interfer/tests/test_reservoir_routing.py]
 
 ---
 
@@ -2802,7 +2802,7 @@ Now let me also write a test for training data generation and run all tests in S
 
 ## 🤖 Assistant
 
-[Tool: Write - /Users/sma/projects/Demarch/interverse/interfere/tests/test_training_data.py]
+[Tool: Write - /Users/sma/projects/Demarch/interverse/interfer/tests/test_training_data.py]
 
 ---
 
@@ -2848,7 +2848,7 @@ Sprint Progress (Demarch-4b7):
 
 ## 🤖 Assistant
 
-[Tool: Read - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/train_reservoir.py]
+[Tool: Read - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/train_reservoir.py]
 
 ---
 
@@ -2864,7 +2864,7 @@ The center spread is 3.0 and noise is 0.5 — the signal-to-noise ratio should b
 
 ## 🤖 Assistant
 
-[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfere/tests/test_reservoir_routing.py]
+[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfer/tests/test_reservoir_routing.py]
 
 ---
 
@@ -2924,7 +2924,7 @@ The fix: cluster centers should be the SAME for train and test. The noise varies
 
 ## 🤖 Assistant
 
-[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/train_reservoir.py]
+[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/train_reservoir.py]
 
 ---
 
@@ -2940,7 +2940,7 @@ Now update `train_reservoir()` to share cluster centers between train and test:
 
 ## 🤖 Assistant
 
-[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfere/server/experiments/train_reservoir.py]
+[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfer/server/experiments/train_reservoir.py]
 
 ---
 
@@ -3240,7 +3240,7 @@ Quality Gates Progress:
 
 ## 🤖 Assistant
 
-[Tool: Bash - Check all changed/new files in interfere]
+[Tool: Bash - Check all changed/new files in interfer]
 
 ---
 
@@ -3260,7 +3260,7 @@ Quality Gates Progress:
 
 ## 🤖 Assistant
 
-[Tool: Bash - Check untracked files matching interfere]
+[Tool: Bash - Check untracked files matching interfer]
 
 ---
 
@@ -3312,7 +3312,7 @@ The `interverse/` directory is in `.gitignore`. These files are tracked via subm
 
 ## 🤖 Assistant
 
-[Tool: Bash - Check git status in interfere subproject]
+[Tool: Bash - Check git status in interfer subproject]
 
 ---
 
@@ -3382,7 +3382,7 @@ Let me add the suggested comment and record the gate pass:
 
 ## 🤖 Assistant
 
-[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfere/server/inference.py]
+[Tool: Edit - /Users/sma/projects/Demarch/interverse/interfer/server/inference.py]
 
 ---
 

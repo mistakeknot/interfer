@@ -1,7 +1,7 @@
-"""MCP server for interfere — exposes health, model listing, and generation to Claude Code.
+"""MCP server for interfer — exposes health, model listing, and generation to Claude Code.
 
 Launched via: uv run python -m server.mcp
-Declared in .claude-plugin/plugin.json mcpServers.interfere
+Declared in .claude-plugin/plugin.json mcpServers.interfer
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ INTERFERE_URL = "http://localhost:8421"
 
 
 def _request(method: str, path: str, body: dict | None = None) -> dict:
-    """Make a request to the interfere HTTP server."""
+    """Make a request to the interfer HTTP server."""
     try:
         if method == "GET":
             r = httpx.get(f"{INTERFERE_URL}{path}", timeout=5.0)
@@ -39,7 +39,7 @@ def handle_request(req: dict) -> dict:
             "result": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {"tools": {}},
-                "serverInfo": {"name": "interfere", "version": "0.1.0"},
+                "serverInfo": {"name": "interfer", "version": "0.1.0"},
             },
         }
 
@@ -50,17 +50,17 @@ def handle_request(req: dict) -> dict:
             "result": {
                 "tools": [
                     {
-                        "name": "interfere_health",
-                        "description": "Check interfere server health, thermal state, and loaded models",
+                        "name": "interfer_health",
+                        "description": "Check interfer server health, thermal state, and loaded models",
                         "inputSchema": {"type": "object", "properties": {}},
                     },
                     {
-                        "name": "interfere_models",
-                        "description": "List loaded models in the interfere Metal subprocess",
+                        "name": "interfer_models",
+                        "description": "List loaded models in the interfer Metal subprocess",
                         "inputSchema": {"type": "object", "properties": {}},
                     },
                     {
-                        "name": "interfere_load",
+                        "name": "interfer_load",
                         "description": "Preload a model into the Metal subprocess",
                         "inputSchema": {
                             "type": "object",
@@ -81,7 +81,7 @@ def handle_request(req: dict) -> dict:
         tool_name = params.get("name", "")
         tool_args = params.get("arguments", {})
 
-        if tool_name == "interfere_health":
+        if tool_name == "interfer_health":
             result = _request("GET", "/health")
             return {
                 "jsonrpc": "2.0",
@@ -91,7 +91,7 @@ def handle_request(req: dict) -> dict:
                 },
             }
 
-        if tool_name == "interfere_models":
+        if tool_name == "interfer_models":
             result = _request("GET", "/health")
             models = result.get("models", [])
             return {
@@ -107,7 +107,7 @@ def handle_request(req: dict) -> dict:
                 },
             }
 
-        if tool_name == "interfere_load":
+        if tool_name == "interfer_load":
             model = tool_args.get("model", "")
             result = _request("POST", "/v1/models/load", {"model": model})
             return {

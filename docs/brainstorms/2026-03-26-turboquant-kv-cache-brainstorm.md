@@ -4,11 +4,11 @@ bead: Sylveste-4dy
 stage: discover
 ---
 
-# TurboQuant: 3-bit KV Cache Compression for interfere
+# TurboQuant: 3-bit KV Cache Compression for interfer
 
 ## What We're Building
 
-A TurboQuant experiment module for interfere that implements PolarQuant + QJL for 3-bit KV cache quantization on Apple Silicon via MLX. Two-stage approach: (1) PolarQuant converts key/value tensors to polar coordinates and maps them to a fixed circular grid, eliminating expensive per-token normalization; (2) QJL applies 1-bit Johnson-Lindenstrauss residual error correction. Target: 6x KV memory reduction with zero accuracy loss, measured against the existing kv_bits=4/8 baselines.
+A TurboQuant experiment module for interfer that implements PolarQuant + QJL for 3-bit KV cache quantization on Apple Silicon via MLX. Two-stage approach: (1) PolarQuant converts key/value tensors to polar coordinates and maps them to a fixed circular grid, eliminating expensive per-token normalization; (2) QJL applies 1-bit Johnson-Lindenstrauss residual error correction. Target: 6x KV memory reduction with zero accuracy loss, measured against the existing kv_bits=4/8 baselines.
 
 ## Why This Approach
 

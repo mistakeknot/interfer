@@ -1,1 +1,1 @@
-"""interfere: Local MLX-LM inference server."""
+"""interfer: Local MLX-LM inference server."""

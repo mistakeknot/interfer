@@ -21,7 +21,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Generator
 
-log = logging.getLogger("interfere.metal_worker")
+log = logging.getLogger("interfer.metal_worker")
 
 
 # ---------------------------------------------------------------------------
@@ -452,7 +452,7 @@ class MetalWorker:
                 self._experiment_configs,
             ),
             daemon=True,
-            name="interfere-metal-worker",
+            name="interfer-metal-worker",
         )
         self._process.start()
 
@@ -540,7 +540,7 @@ class MetalWorker:
         self._watchdog_thread = threading.Thread(
             target=self._watchdog_loop,
             daemon=True,
-            name="interfere-watchdog",
+            name="interfer-watchdog",
         )
         self._watchdog_thread.start()
 

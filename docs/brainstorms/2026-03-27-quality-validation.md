@@ -8,7 +8,7 @@ type: brainstorm
 
 ## Problem
 
-interfere currently tracks `mean_confidence` (avg max-softmax probability across tokens) but has no semantic quality scoring. This means:
+interfer currently tracks `mean_confidence` (avg max-softmax probability across tokens) but has no semantic quality scoring. This means:
 - No way to detect degenerate outputs (repetition loops, incoherent text)
 - No way to validate that local models produce acceptable quality vs cloud
 - No data for interspect evidence to evaluate Track B5 enforce mode promotion

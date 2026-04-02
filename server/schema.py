@@ -1,4 +1,4 @@
-"""OpenAI-compatible request/response types for interfere."""
+"""OpenAI-compatible request/response types for interfer."""
 
 from __future__ import annotations
 

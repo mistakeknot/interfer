@@ -27,10 +27,10 @@
 ## Git
 - Trunk-based: commit to main
 - Files are gitignored at Sylveste root (`interverse/`), use `git add -f` or own repo
-- Commit message format: `feat(interfere): description` or `fix(interfere): description`
+- Commit message format: `feat(interfer): description` or `fix(interfer): description`
 
 ## Testing
 - pytest + pytest-asyncio (strict mode)
 - `pytest.importorskip("mlx")` for tests that need Metal
 - `@pytest.mark.skipif(sys.platform != "darwin")` for macOS-only tests
-- Import from `server.*` (not `interfere.server.*`) — hatchling maps `server/` as the package
+- Import from `server.*` (not `interfer.server.*`) — hatchling maps `server/` as the package
