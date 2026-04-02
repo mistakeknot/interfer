@@ -16,7 +16,7 @@
       "Zero-copy DMA from NVMe to GPU via Metal shared memory is essential; any approach that copies through Python heap is disqualifying",
       "Prefetch pipeline depth of 2+ layers must be feasible without exceeding 128 GB unified memory headroom"
     ],
-    "task_context": "The interfere server runs MLX inference in a spawned Metal subprocess on an M5 Max 128GB machine. Evaluating architectural paths to SSD-streaming inference for 700B+ MoE models that exceed DRAM capacity, targeting 8+ tok/s.",
+    "task_context": "The interfer server runs MLX inference in a spawned Metal subprocess on an M5 Max 128GB machine. Evaluating architectural paths to SSD-streaming inference for 700B+ MoE models that exceed DRAM capacity, targeting 8+ tok/s.",
     "anti_overlap": [
       "fd-language-ffi-integration covers the Python-to-C/ObjC/Rust/Swift FFI boundary",
       "fd-mlx-integration-surface covers how weights land in MLX arrays",
@@ -39,7 +39,7 @@
       "A viable path uses mx.array with a custom Metal allocator or mx.array.from_ptr() equivalent",
       "Expert weight chunks must be dequantizable in isolation for streaming to be effective"
     ],
-    "task_context": "The interfere server runs MLX inference in a spawned Metal subprocess on an M5 Max 128GB machine. Evaluating architectural paths to SSD-streaming inference for 700B+ MoE models that exceed DRAM capacity, targeting 8+ tok/s.",
+    "task_context": "The interfer server runs MLX inference in a spawned Metal subprocess on an M5 Max 128GB machine. Evaluating architectural paths to SSD-streaming inference for 700B+ MoE models that exceed DRAM capacity, targeting 8+ tok/s.",
     "anti_overlap": [
       "fd-io-pipeline-throughput covers the NVMe read mechanics and DMA path",
       "fd-language-ffi-integration covers FFI/IPC boundary costs",
@@ -56,7 +56,7 @@
       "Evaluate PyO3 extension module: can Rust own the pread loop, fill a Metal-mapped buffer, and return a pointer to Python with no data copy, while releasing the GIL?",
       "Assess Objective-C/Metal approach: parameterizing flash-moe as a dylib callable from Python via ctypes",
       "Review Swift Package as an FFI target: can a Swift actor own async NVMe reads and signal MLX via Metal shared events?",
-      "Check whether the interfere subprocess model (multiprocessing spawn) is compatible with loading a native dylib in the Metal worker",
+      "Check whether the interfer subprocess model (multiprocessing spawn) is compatible with loading a native dylib in the Metal worker",
       "Identify whether any approach requires private Apple frameworks that could break across macOS versions"
     ],
     "success_hints": [
@@ -64,7 +64,7 @@
       "GIL release during I/O wait is mandatory for any Python-side solution",
       "Objective-C/Metal path reusing flash-moe has lowest integration risk if parameterizable"
     ],
-    "task_context": "The interfere server runs MLX inference in a spawned Metal subprocess on an M5 Max 128GB machine. Evaluating architectural paths to SSD-streaming inference for 700B+ MoE models that exceed DRAM capacity, targeting 8+ tok/s.",
+    "task_context": "The interfer server runs MLX inference in a spawned Metal subprocess on an M5 Max 128GB machine. Evaluating architectural paths to SSD-streaming inference for 700B+ MoE models that exceed DRAM capacity, targeting 8+ tok/s.",
     "anti_overlap": [
       "fd-io-pipeline-throughput covers NVMe bandwidth math",
       "fd-mlx-integration-surface covers MLX array integration after FFI boundary",
@@ -87,7 +87,7 @@
       "A GPU-resident expert cache with >80% hit rate reduces effective SSD bandwidth demand by 5x",
       "Shared/always-active experts pinned in DRAM should consume <10 GB for free latency elimination"
     ],
-    "task_context": "The interfere server runs MLX inference in a spawned Metal subprocess on an M5 Max 128GB machine. Evaluating architectural paths to SSD-streaming inference for 700B+ MoE models that exceed DRAM capacity, targeting 8+ tok/s.",
+    "task_context": "The interfer server runs MLX inference in a spawned Metal subprocess on an M5 Max 128GB machine. Evaluating architectural paths to SSD-streaming inference for 700B+ MoE models that exceed DRAM capacity, targeting 8+ tok/s.",
     "anti_overlap": [
       "fd-io-pipeline-throughput covers raw NVMe read mechanics",
       "fd-mlx-integration-surface covers how weights land in MLX",
@@ -96,7 +96,7 @@
   },
   {
     "name": "fd-maintainability-operability",
-    "focus": "Long-term maintainability, debuggability, and operational risk of each architectural approach integrated into the interfere Python server",
+    "focus": "Long-term maintainability, debuggability, and operational risk of each architectural approach integrated into the interfer Python server",
     "persona": "Senior software architect with experience shipping production inference infrastructure. Evaluates proposals for graceful degradation, debuggability under load, and constraints on future iteration.",
     "decision_lens": "Flags approaches that create irreversible architectural commitments (forking upstream projects, private Apple APIs, native code only one person can debug) before the performance hypothesis is validated. Prefers designs with incremental adoption.",
     "review_areas": [
@@ -111,7 +111,7 @@
       "Preferred approach activatable via single CLI flag without modifying the Queue protocol",
       "Fallback to standard mlx-lm loading when model fits in RAM must be automatic"
     ],
-    "task_context": "The interfere server runs MLX inference in a spawned Metal subprocess on an M5 Max 128GB machine. Evaluating architectural paths to SSD-streaming inference for 700B+ MoE models that exceed DRAM capacity, targeting 8+ tok/s.",
+    "task_context": "The interfer server runs MLX inference in a spawned Metal subprocess on an M5 Max 128GB machine. Evaluating architectural paths to SSD-streaming inference for 700B+ MoE models that exceed DRAM capacity, targeting 8+ tok/s.",
     "anti_overlap": [
       "fd-io-pipeline-throughput covers NVMe bandwidth limits",
       "fd-language-ffi-integration covers runtime FFI overhead",
