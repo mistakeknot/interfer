@@ -1,0 +1,17 @@
+prompt_id	method	exit_layer	threshold	tokens	accepted	verified	acceptance_rate	tok_per_sec	elapsed_s	output_preview
+lcs_algorithm	standard	48	-	200	-	-	-	4.48	44.631	The user wants me to write a Python function that finds the longest common subsequence (LCS) of two strings. I need to:\n\n1. Implement the LCS algorith
+lcs_algorithm	layerskip	12	0.95	200	0	199	0.0	6.18	32.382	The user wants me to write a Python function that finds the longest common subsequence (LCS) of two strings. I need to:\n\n1. Create a function with typ
+lcs_algorithm	layerskip	24	0.95	200	0	199	0.0	6.19	32.286	The user wants me to write a Python function that finds the longest common subsequence (LCS) of two strings. I need to:\n\n1. Create a function with typ
+lcs_algorithm	layerskip	36	0.95	200	0	199	0.0	5.65	35.423	The user wants me to write a Python function that finds the longest common subsequence (LCS) of two strings. I need to:\n\n1. Create a function with typ
+code_review	standard	48	-	200	-	-	-	6.43	31.096	Here's a thinking process that leads to the review:\n\n1.  **Analyze the Request:**\n    *   **Task:** Review a specific Python function (`process_users`
+code_review	layerskip	12	0.95	200	0	199	0.0	7.4	27.044	Here's a thinking process that leads to the review:\n\n1.  **Analyze the Request:**\n    *   **Task:** Review a specific Python function (`process_users`
+code_review	layerskip	24	0.95	200	0	199	0.0	8.0	24.985	Here's a thinking process that leads to the review:\n\n1.  **Analyze the Request:**\n    *   **Task:** Review a specific Python function (`process_users`
+code_review	layerskip	36	0.95	200	0	199	0.0	8.56	23.355	Here's a thinking process that leads to the review:\n\n1.  **Analyze the Request:**\n    *   **Task:** Review a specific Python function (`process_users`
+refactor	standard	48	-	200	-	-	-	10.68	18.73	Here's a thinking process that leads to the suggested refactoring:\n\n1.  **Analyze the Original Code:**\n    *   **Functionality:** Calculates mean, med
+refactor	layerskip	12	0.95	200	0	199	0.0	8.37	23.907	Here's a thinking process that leads to the suggested refactoring:\n\n1.  **Analyze the Original Code:**\n    *   **Functionality:** Calculates mean, med
+refactor	layerskip	24	0.95	200	0	199	0.0	5.49	36.451	Here's a thinking process that leads to the suggested refactoring:\n\n1.  **Analyze the Original Code:**\n    *   **Functionality:** Calculates mean, med
+refactor	layerskip	36	0.95	200	0	199	0.0	4.33	46.145	Here's a thinking process that leads to the suggested refactoring:\n\n1.  **Analyze the Original Code:**\n    *   **Functionality:** Calculates mean, med
+system_design	standard	48	-	200	-	-	-	2.24	89.241	Here's a thinking process that leads to the suggested implementation and explanation:\n\n1.  **Deconstruct the Request:**\n    *   **Core Task:** Design 
+system_design	layerskip	12	0.95	200	0	199	0.0	1.0	200.687	Here's a thinking process that leads to the suggested implementation and explanation:\n\n1.  **Deconstruct the Request:**\n    *   **Goal:** Design a Tok
+system_design	layerskip	24	0.95	200	0	199	0.0	0.41	483.32	Here's a thinking process that leads to the suggested implementation and explanation:\n\n1.  **Deconstruct the Request:**\n    *   **Goal:** Design a Tok
+system_design	layerskip	36	0.95	200	0	199	0.0	0.36	562.29	Here's a thinking process that leads to the suggested implementation and explanation:\n\n1.  **Deconstruct the Request:**\n    *   **Goal:** Design a Tok
