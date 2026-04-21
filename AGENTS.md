@@ -154,6 +154,39 @@ one line at a time, so killed runs can resume.
 - `thermal_worst`: worst thermal pressure observed
 - `errors`: number of generations that crashed
 
+### Code Correctness Benchmark (Sylveste-b7j)
+
+`benchmarks/code_correctness.py` adds **external-suite pass@1** on top of the
+holistic's internal `exec_test` rubric. Two suites:
+
+- `livecodebench-v6` — LCB v6 release, time-segmented / contamination-free.
+  Stdin/stdout execution, no Docker. First-run pulls from HuggingFace
+  (`livecodebench/code_generation_lite`, `release_v6`) and caches to
+  `benchmarks/datasets_cache/livecodebench_v6.jsonl`.
+- `swe-bench-lite` — **stubbed** pending Sylveste-r8g. `--dry-run` works; real
+  runs raise `NotImplementedError`.
+
+```bash
+# Dry-run (no MLX, stub model + fixture problems — the bead's verification gate)
+uv run python -m benchmarks.code_correctness \
+  --model=local:qwen3.5-122b --suite=swe-bench-lite --dry-run
+
+# Real LCB v6 pass on local 122B vs flash-moe vs cloud (serial, minutes each)
+uv run python -m benchmarks.code_correctness \
+  --models=local:qwen3.5-122b,flash-moe:397b,cloud \
+  --suite=livecodebench-v6 \
+  --output benchmarks/holistic_results/
+```
+
+Model aliases map to `CONFIG_REGISTRY` keys: `local:qwen3.5-{9b,35b,122b}`,
+`flash-moe:397b{,-q3,-4bit}`, `local:{deepseek-v3.2,glm-5,kimi-k2.5}`, `cloud`.
+
+Output: `code_correctness.jsonl` (one line per (suite, model, problem)) plus
+`code_correctness_summary.json` (append-or-replace by (suite, model) — safe to
+re-run partial matrices). Resumable: re-invoking with the same output dir
+re-uses prior lines and only generates the missing (suite, model, problem_id)
+triples.
+
 ## Memory Budget (128GB M5 Max)
 
 ```
