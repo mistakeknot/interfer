@@ -31,6 +31,7 @@ MODELS=(
   local:qwen3.6-35b
   local:qwen3.6-27b
   local:qwen3.5-35b
+  flash-moe:397b
 )
 
 for m in "${MODELS[@]}"; do
