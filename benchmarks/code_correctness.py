@@ -63,6 +63,7 @@ MODEL_ALIASES: dict[str, str] = {
     "local:qwen3.6-27b": "27b-3.6",
     "local:qwen3.6-35b": "35b-3.6",
     "local:qwen3.6-35b-dwq": "35b-3.6-dwq",
+    "local:qwen3.6-35b-dwq-thinking": "35b-3.6-dwq-thinking",
     "local:deepseek-v3.2": "deepseek-v3.2",
     "local:glm-5": "glm-5",
     "local:kimi-k2.5": "kimi-k2.5",
@@ -141,7 +142,13 @@ def _dispatch_generator(
     messages = [{"role": "user", "content": prompt}]
     backend = config["backend"]
     if backend == "mlx":
-        return _generate_mlx(config["model"], messages, max_tokens, timeout=timeout)
+        return _generate_mlx(
+            config["model"],
+            messages,
+            max_tokens,
+            timeout=timeout,
+            enable_thinking=config.get("enable_thinking"),
+        )
     if backend == "flash-moe":
         return _generate_flashmoe(config, messages, max_tokens, timeout=timeout)
     if backend == "cloud":
@@ -322,7 +329,7 @@ def run_suite(
                 gen = _stub_generator(prompt_text)
             else:
                 gen = _dispatch_generator(
-                    config, prompt_text, max_tokens=2048, timeout=timeout
+                    config, prompt_text, max_tokens=8192, timeout=timeout
                 )
         except Exception as e:
             print(f"  [{i}/{len(problems)}] {problem_id} — GENERATION ERROR: {e}")

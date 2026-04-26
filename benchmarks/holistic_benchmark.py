@@ -168,19 +168,29 @@ CONFIG_REGISTRY: dict[str, dict[str, Any]] = {
         "backend": "mlx",
         "model": "mlx-community/Qwen3.6-27B-4bit",
         "label": "Qwen3.6-27B-4bit",
+        "enable_thinking": False,
         "description": "Qwen3.6 dense 27B (released 2026-04-22) — between 9B and 35B tier",
     },
     "35b-3.6": {
         "backend": "mlx",
         "model": "mlx-community/Qwen3.6-35B-A3B-4bit",
         "label": "Qwen3.6-35B-A3B-4bit",
+        "enable_thinking": False,
         "description": "Qwen3.6 MoE 35B/3B-active — drop-in C2 successor to 35b (released 2026-04-16)",
     },
     "35b-3.6-dwq": {
         "backend": "mlx",
         "model": "mlx-community/Qwen3.6-35B-A3B-4bit-DWQ",
         "label": "Qwen3.6-35B-A3B-4bit-DWQ",
+        "enable_thinking": False,
         "description": "Qwen3.6 35B/3B-active with DWQ quant — +1-3% expected vs plain 4bit",
+    },
+    "35b-3.6-dwq-thinking": {
+        "backend": "mlx",
+        "model": "mlx-community/Qwen3.6-35B-A3B-4bit-DWQ",
+        "label": "Qwen3.6-35B-A3B-4bit-DWQ (thinking)",
+        "enable_thinking": True,
+        "description": "Same DWQ weights as 35b-3.6-dwq but with thinking enabled — A/B for thinking ROI",
     },
     "flashmoe-q3": {
         "backend": "flash-moe",
@@ -239,11 +249,16 @@ def _generate_mlx(
     messages: list[dict],
     max_tokens: int,
     timeout: float = 300.0,
+    enable_thinking: bool | None = None,
 ) -> dict[str, Any]:
     """Generate with an MLX model via mlx-lm.
 
     Uses stream_generate for token-level timeout support. If the timeout
     fires mid-generation, returns whatever was produced so far.
+
+    `enable_thinking` is forwarded to apply_chat_template only when not None,
+    so models whose chat template doesn't define the variable (e.g. Qwen3.5)
+    still render unchanged.
     """
     import mlx.core as mx
     from mlx_lm import load, stream_generate
@@ -264,9 +279,13 @@ def _generate_mlx(
 
     # Format as chat
     if hasattr(tokenizer, "apply_chat_template"):
-        text = tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True
-        )
+        tmpl_kwargs: dict[str, Any] = {
+            "tokenize": False,
+            "add_generation_prompt": True,
+        }
+        if enable_thinking is not None:
+            tmpl_kwargs["enable_thinking"] = enable_thinking
+        text = tokenizer.apply_chat_template(messages, **tmpl_kwargs)
     else:
         text = messages[-1]["content"]
 

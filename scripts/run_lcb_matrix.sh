@@ -28,6 +28,7 @@ echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 MODELS=(
   cloud
   local:qwen3.6-35b-dwq
+  local:qwen3.6-35b-dwq-thinking
   local:qwen3.6-35b
   local:qwen3.6-27b
   local:qwen3.5-35b
@@ -43,7 +44,7 @@ for m in "${MODELS[@]}"; do
     --model="$m" \
     --suite=livecodebench-v6 \
     --output="$OUT" \
-    --timeout=120 \
+    --timeout=180 \
     $LIMIT_FLAG \
     2>&1 | tee -a "$OUT/run.log"
 done

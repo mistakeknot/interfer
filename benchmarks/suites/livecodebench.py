@@ -107,8 +107,13 @@ class LCBProblem:
 
 
 def load_problems(limit: int | None = None, dry_run: bool = False) -> list[LCBProblem]:
-    """Load LCB v6 problems, preferring cache → HuggingFace → fixture."""
-    if dry_run and not DATASET_CACHE.exists():
+    """Load LCB v6 problems.
+
+    `dry_run=True` always returns the fixture — never the real cache — so
+    tests stay deterministic regardless of whether the cache has been
+    populated. Real runs prefer cache → HuggingFace fetch.
+    """
+    if dry_run:
         return [LCBProblem.from_raw(p) for p in DRY_RUN_FIXTURE[: limit or None]]
 
     if DATASET_CACHE.exists():
@@ -120,9 +125,6 @@ def load_problems(limit: int | None = None, dry_run: bool = False) -> list[LCBPr
                     raws.append(json.loads(line))
         problems = [LCBProblem.from_raw(r) for r in raws]
         return problems[:limit] if limit else problems
-
-    if dry_run:
-        return [LCBProblem.from_raw(p) for p in DRY_RUN_FIXTURE[: limit or None]]
 
     # LiveCodeBench publishes the dataset as 6 monolithic JSONL files
     # (test.jsonl + test2-6.jsonl) and a Python loading script. `datasets>=4.0`
