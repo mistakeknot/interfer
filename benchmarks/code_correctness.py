@@ -47,6 +47,7 @@ from typing import Any, Callable
 from benchmarks.holistic_benchmark import (
     CONFIG_REGISTRY,
     _generate_cloud,
+    _generate_codex,
     _generate_flashmoe,
     _generate_mlx,
 )
@@ -153,6 +154,8 @@ def _dispatch_generator(
         return _generate_flashmoe(config, messages, max_tokens, timeout=timeout)
     if backend == "cloud":
         return _generate_cloud(config["model"], messages, max_tokens, timeout=timeout)
+    if backend == "codex":
+        return _generate_codex(config, messages, max_tokens, timeout=timeout)
     raise ValueError(f"Unknown backend: {backend}")
 
 

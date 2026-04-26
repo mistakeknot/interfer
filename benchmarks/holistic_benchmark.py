@@ -231,10 +231,18 @@ CONFIG_REGISTRY: dict[str, dict[str, Any]] = {
         "description": "Kimi K2.5 1T MoE — 3-bit quantization",
     },
     "cloud": {
+        "backend": "codex",
+        "model": "gpt-5.5",
+        "reasoning_effort": "xhigh",
+        "service_tier": "fast",
+        "label": "GPT-5.5 xhigh fast (codex OAuth)",
+        "description": "Cloud baseline via codex CLI + ChatGPT OAuth (no API key)",
+    },
+    "cloud-claude-sonnet-4": {
         "backend": "cloud",
         "model": "claude-sonnet-4-20250514",
-        "label": "Claude Sonnet (cloud)",
-        "description": "Cloud baseline via Anthropic API",
+        "label": "Claude Sonnet 4 (Anthropic API)",
+        "description": "Cloud Claude Sonnet — needs ANTHROPIC_API_KEY + credits",
     },
 }
 
@@ -444,6 +452,104 @@ def _generate_cloud(
         "ttft_s": 0,  # not meaningful for cloud
         "gen_tps": round(n_tokens / elapsed if elapsed > 0 else 0, 2),
         "peak_mem_gb": 0,
+    }
+
+
+def _generate_codex(
+    config: dict,
+    messages: list[dict],
+    max_tokens: int,
+    timeout: float = 600.0,
+) -> dict[str, Any]:
+    """Generate via the codex CLI (OpenAI ChatGPT OAuth, no API key needed).
+
+    Shells out to `codex exec --model gpt-5.5 -c model_reasoning_effort=...
+    -c service_tier=...` and reads the final assistant message via
+    `--output-last-message`. Token counts come from stderr's "tokens used"
+    line; we parse them best-effort and fall back to 0 if missing.
+
+    Codex sandboxes its execution by default, but `read-only` is enough for
+    pure code-generation prompts (no shell calls expected).
+    """
+    prompt_text = "\n\n".join(m.get("content", "") for m in messages)
+    model = config.get("model", "gpt-5.5")
+    reasoning = config.get("reasoning_effort", "xhigh")
+    service_tier = config.get("service_tier", "fast")
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".txt", delete=False
+    ) as last_msg_file:
+        last_msg_path = last_msg_file.name
+
+    cmd = [
+        "codex",
+        "exec",
+        "--model",
+        model,
+        "-c",
+        f'model_reasoning_effort="{reasoning}"',
+        "-c",
+        f'service_tier="{service_tier}"',
+        "-s",
+        "read-only",
+        "--output-last-message",
+        last_msg_path,
+    ]
+
+    t_start = time.monotonic()
+    timed_out = False
+    output_text = ""
+    n_tokens = 0
+    try:
+        result = subprocess.run(
+            cmd,
+            input=prompt_text,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as e:
+        timed_out = True
+        result = None
+        # Best-effort: read whatever was written to last_msg_path
+        try:
+            with open(last_msg_path) as f:
+                output_text = f.read()
+        except Exception:
+            output_text = e.stdout.decode() if e.stdout else ""
+    finally:
+        elapsed = time.monotonic() - t_start
+
+    if not timed_out and result is not None:
+        try:
+            with open(last_msg_path) as f:
+                output_text = f.read()
+        except Exception:
+            output_text = result.stdout or ""
+        # Parse "tokens used N,NNN" from codex's stderr/stdout
+        for stream in (result.stderr, result.stdout):
+            if not stream:
+                continue
+            m = re.search(r"tokens used\s+([\d,]+)", stream)
+            if m:
+                try:
+                    n_tokens = int(m.group(1).replace(",", ""))
+                except ValueError:
+                    pass
+                break
+        try:
+            os.unlink(last_msg_path)
+        except OSError:
+            pass
+
+    return {
+        "output_text": output_text,
+        "tokens_generated": n_tokens,
+        "elapsed_s": round(elapsed, 3),
+        "ttft_s": 0,  # not exposed by codex exec
+        "gen_tps": round(n_tokens / elapsed if elapsed > 0 else 0, 2),
+        "peak_mem_gb": 0,
+        "timed_out": timed_out,
     }
 
 
