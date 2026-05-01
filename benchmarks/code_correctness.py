@@ -58,13 +58,7 @@ from benchmarks.suites import livecodebench, swe_bench_lite
 # ---------------------------------------------------------------------------
 
 MODEL_ALIASES: dict[str, str] = {
-    "local:qwen3.5-9b": "9b",
-    "local:qwen3.5-35b": "35b",
-    "local:qwen3.5-122b": "122b",
-    "local:qwen3.6-27b": "27b-3.6",
     "local:qwen3.6-35b": "35b-3.6",
-    "local:qwen3.6-35b-dwq": "35b-3.6-dwq",
-    "local:qwen3.6-35b-dwq-thinking": "35b-3.6-dwq-thinking",
     "local:deepseek-v3.2": "deepseek-v3.2",
     "local:glm-5": "glm-5",
     "local:kimi-k2.5": "kimi-k2.5",
@@ -74,6 +68,9 @@ MODEL_ALIASES: dict[str, str] = {
     "cloud": "cloud",
     "cloud:claude-sonnet-4": "cloud",
 }
+# Dropped 2026-04-29 (Sylveste-2ss): local:qwen3.5-9b, qwen3.5-35b, qwen3.5-122b,
+# qwen3.6-27b, qwen3.6-35b-dwq, qwen3.6-35b-dwq-thinking. See CONFIG_REGISTRY
+# comment in holistic_benchmark.py for rationale.
 
 
 def resolve_config(model_name: str) -> tuple[str, dict]:

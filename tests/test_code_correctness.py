@@ -22,8 +22,8 @@ from benchmarks import code_correctness as cc  # noqa: E402
 
 
 def test_resolve_config_known_alias():
-    name, cfg = cc.resolve_config("local:qwen3.5-122b")
-    assert name == "122b"
+    name, cfg = cc.resolve_config("local:qwen3.6-35b")
+    assert name == "35b-3.6"
     assert cfg["backend"] == "mlx"
 
 
@@ -36,7 +36,7 @@ def test_swebench_lite_dry_run_emits_zero_pass(tmp_path):
     # Matches the bead's verification command precisely.
     sc = cc.run_suite(
         suite="swe-bench-lite",
-        model_name="local:qwen3.5-122b",
+        model_name="local:qwen3.6-35b",
         output_dir=tmp_path,
         dry_run=True,
     )
@@ -51,7 +51,7 @@ def test_swebench_lite_dry_run_emits_zero_pass(tmp_path):
     for line in lines:
         rec = json.loads(line)
         assert rec["suite"] == "swe-bench-lite"
-        assert rec["model"] == "local:qwen3.5-122b"
+        assert rec["model"] == "local:qwen3.6-35b"
         assert rec["passed"] is False
 
 
@@ -82,7 +82,7 @@ def test_livecodebench_real_executor_scores_correct_solution(tmp_path):
     """If the generator emits correct Python, LCB should score 2/2."""
     sc = cc.run_suite(
         suite="livecodebench-v6",
-        model_name="local:qwen3.5-122b",
+        model_name="local:qwen3.6-35b",
         output_dir=tmp_path,
         dry_run=True,  # uses fixture problems
         generator=_correct_lcb_generator,
@@ -97,7 +97,7 @@ def test_livecodebench_stub_executor_scores_incorrect_solution(tmp_path):
     """The built-in stub emits `__STUB__`, which must not match fixture output."""
     sc = cc.run_suite(
         suite="livecodebench-v6",
-        model_name="local:qwen3.5-122b",
+        model_name="local:qwen3.6-35b",
         output_dir=tmp_path,
         dry_run=True,
     )
@@ -109,7 +109,7 @@ def test_cli_dryrun_swebench(tmp_path, capsys):
     """End-to-end CLI: match the bead verification command and output dir."""
     rc = cc.main(
         [
-            "--model=local:qwen3.5-122b",
+            "--model=local:qwen3.6-35b",
             "--suite=swe-bench-lite",
             "--dry-run",
             f"--output={tmp_path}",

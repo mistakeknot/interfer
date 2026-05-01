@@ -15,7 +15,7 @@ Usage:
     uv run python benchmarks/holistic_benchmark.py generate \
         --prompts benchmarks/prompts/holistic_eval.json \
         --output benchmarks/holistic_results/ \
-        --configs 35b,122b,flashmoe-q3,flashmoe-4bit,cloud
+        --configs 35b-3.6,flashmoe-q3,flashmoe-4bit,cloud
 
     # Stage 2: Execute code tests (fast)
     uv run python benchmarks/holistic_benchmark.py execute \
@@ -33,7 +33,7 @@ Usage:
     uv run python benchmarks/holistic_benchmark.py all \
         --prompts benchmarks/prompts/holistic_eval.json \
         --output benchmarks/holistic_results/ \
-        --configs 35b,flashmoe-q3,cloud
+        --configs 35b-3.6,flashmoe-q3,cloud
 """
 
 from __future__ import annotations
@@ -152,45 +152,21 @@ CONFIG_REGISTRY: dict[str, dict[str, Any]] = {
         "label": "Qwen3.5-0.8B-4bit",
         "description": "Tiny dense model, draft-size reference (weights not cached)",
     },
-    "35b": {
-        "backend": "mlx",
-        "model": "mlx-community/Qwen3.5-35B-A3B-4bit",
-        "label": "Qwen3.5-35B-A3B-4bit",
-        "description": "MoE 35B, 3B active — C2 routing tier",
-    },
-    "122b": {
-        "backend": "mlx",
-        "model": "mlx-community/Qwen3.5-122B-A10B-4bit",
-        "label": "Qwen3.5-122B-A10B-4bit",
-        "description": "MoE 122B, 10B active — large local model",
-    },
-    "27b-3.6": {
-        "backend": "mlx",
-        "model": "mlx-community/Qwen3.6-27B-4bit",
-        "label": "Qwen3.6-27B-4bit",
-        "enable_thinking": False,
-        "description": "Qwen3.6 dense 27B (released 2026-04-22) — between 9B and 35B tier",
-    },
+    # Dominated configs pruned 2026-04-29 (Sylveste-2ss) per LCB v6 matrix:
+    #   - 35b (Qwen3.5-35B-A3B): obsolete, +22.3 points behind 3.6 at 5× decode speed
+    #   - 122b (Qwen3.5-122B-A10B): superseded; quality not retested vs 3.6 because dominated by cloud
+    #   - 27b-3.6 (Qwen3.6-27B dense): 4× slower per-token on M5, lower quality than 35b-3.6
+    #   - 35b-3.6-dwq: same quality as plain 4bit, 38% slower (DWQ overhead with no payoff)
+    #   - 35b-3.6-dwq-thinking: -18.3 points vs no-think at 180s budget (104 runtime errors)
+    # See docs/benchmarks/2026-04-27-lcb-v6-matrix.md for the A/B data. To re-add a
+    # dropped config (e.g. for re-evaluation under a new budget), restore the dict
+    # entry from git history.
     "35b-3.6": {
         "backend": "mlx",
         "model": "mlx-community/Qwen3.6-35B-A3B-4bit",
         "label": "Qwen3.6-35B-A3B-4bit",
         "enable_thinking": False,
-        "description": "Qwen3.6 MoE 35B/3B-active — drop-in C2 successor to 35b (released 2026-04-16)",
-    },
-    "35b-3.6-dwq": {
-        "backend": "mlx",
-        "model": "mlx-community/Qwen3.6-35B-A3B-4bit-DWQ",
-        "label": "Qwen3.6-35B-A3B-4bit-DWQ",
-        "enable_thinking": False,
-        "description": "Qwen3.6 35B/3B-active with DWQ quant — +1-3% expected vs plain 4bit",
-    },
-    "35b-3.6-dwq-thinking": {
-        "backend": "mlx",
-        "model": "mlx-community/Qwen3.6-35B-A3B-4bit-DWQ",
-        "label": "Qwen3.6-35B-A3B-4bit-DWQ (thinking)",
-        "enable_thinking": True,
-        "description": "Same DWQ weights as 35b-3.6-dwq but with thinking enabled — A/B for thinking ROI",
+        "description": "Qwen3.6 MoE 35B/3B-active — C2 routing tier (LCB v6: 40.0% pass@1, 15s median gen)",
     },
     "flashmoe-q3": {
         "backend": "flash-moe",
