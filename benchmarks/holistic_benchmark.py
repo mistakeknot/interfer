@@ -45,6 +45,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -353,17 +354,31 @@ def _generate_flashmoe(
         _generate_flashmoe._worker = worker
         _generate_flashmoe._config_key = config_key
 
+    # Sylveste-6f0: pass a cancel Event so the worker can close the underlying
+    # HTTP response when our outer timer fires. Without this, breaking out of
+    # the for-loop leaves the socket read blocked and _generate_lock held —
+    # producing the wedge cascade observed in the LCB v6 matrix run.
+    cancel = threading.Event()
     timed_out = False
     t_start = time.monotonic()
     chunks: list[str] = []
-    # Iterate the generator so we can break on timeout
-    for chunk in worker.generate(
-        messages=messages, max_tokens=max_tokens, timeout=timeout + 30
-    ):
-        chunks.append(chunk)
-        if time.monotonic() - t_start > timeout:
-            timed_out = True
-            break
+    gen = worker.generate(
+        messages=messages,
+        max_tokens=max_tokens,
+        timeout=timeout + 5,
+        cancel=cancel,
+    )
+    try:
+        for chunk in gen:
+            chunks.append(chunk)
+            if time.monotonic() - t_start > timeout:
+                timed_out = True
+                cancel.set()
+                break
+    finally:
+        # Closing the generator triggers GeneratorExit inside generate(),
+        # which closes the response on the worker side as a backstop.
+        gen.close()
     t_end = time.monotonic()
 
     elapsed = t_end - t_start
