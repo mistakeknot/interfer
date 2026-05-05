@@ -98,17 +98,17 @@
   {
     "suite": "livecodebench-v6",
     "model": "flash-moe:397b",
-    "n_problems": 141,
-    "n_passed": 35,
-    "pass_at_1": 0.24822695035460993,
+    "n_problems": 175,
+    "n_passed": 38,
+    "pass_at_1": 0.21714285714285714,
     "median_gen_elapsed_s": 180.032,
     "median_ttft_s": 0,
-    "median_exec_elapsed_s": 0.121,
-    "errors": 34,
+    "median_exec_elapsed_s": 0.128,
+    "errors": 0,
     "dry_run": false,
-    "limit": null,
+    "limit": 175,
     "results_file": "benchmarks/lcb_v6_matrix/code_correctness.jsonl",
-    "started_at": "2026-04-27T18:20:36.780161+00:00",
-    "finished_at": "2026-04-28T02:52:17.403031+00:00"
+    "started_at": "2026-05-04T09:00:05.182360+00:00",
+    "finished_at": "2026-05-04T09:02:40.233707+00:00"
   }
 ]

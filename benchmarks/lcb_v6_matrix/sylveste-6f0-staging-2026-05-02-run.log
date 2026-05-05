@@ -1,0 +1,18 @@
+[00:20:15] Sylveste-6f0 staging — model=flash-moe:397b  out=benchmarks/lcb_v6_matrix  ladder=[1 5 50 150 175]
+[00:20:15] Tripwires: T1 zero Errno-60, T2 timeouts ≤3% (warn ≥1%), T3 stderr grows, T4 pid alive
+[00:20:15] ===============================================
+[00:20:15]   Stage S0 — limit=1
+[00:20:15] ===============================================
+[00:20:15] pre: run.log lines=    1303  flashmoe pid=0  stderr=0 bytes
+Running livecodebench-v6 × flash-moe:397b (flash-moe-397B-Q3) — 1 problems, dry_run=False
+  [1/1] abc387_b — cached (PASS)
+
+  livecodebench-v6 × flash-moe:397b: pass@1 = 1/1 (100.00%)  errors=0
+
+=== code_correctness scorecard ===
+suite                model                        pass@1     n      errors
+livecodebench-v6     flash-moe:397b               100.00% (1/1) 1      0     
+[00:20:16] TRIPWIRE T3 FAIL: no stderr log file under /Users/sma/.cache/interfer (H1 drainer didn't run)
+[00:20:16] DUMP forensics → benchmarks/lcb_v6_matrix/sylveste-6f0-stage-S0-fail
+[00:20:16] STAGE S0 FAILED — halting ladder
+[00:20:16] Ladder halted at S0 (limit=1). Inspect benchmarks/lcb_v6_matrix/sylveste-6f0-stage-S0-fail/

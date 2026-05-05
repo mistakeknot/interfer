@@ -1,0 +1,1 @@
+T3: stderr drainer never created a log file

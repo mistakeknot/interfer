@@ -1301,3 +1301,11 @@ Running livecodebench-v6 × flash-moe:397b (flash-moe-397B-Q3) — 175 problems,
 === code_correctness scorecard ===
 suite                model                        pass@1     n      errors
 livecodebench-v6     flash-moe:397b               24.82% (35/141) 141    34    
+Running livecodebench-v6 × flash-moe:397b (flash-moe-397B-Q3) — 1 problems, dry_run=False
+  [1/1] abc387_b — cached (PASS)
+
+  livecodebench-v6 × flash-moe:397b: pass@1 = 1/1 (100.00%)  errors=0
+
+=== code_correctness scorecard ===
+suite                model                        pass@1     n      errors
+livecodebench-v6     flash-moe:397b               100.00% (1/1) 1      0     

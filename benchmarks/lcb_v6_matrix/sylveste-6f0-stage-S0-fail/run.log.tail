@@ -1,0 +1,200 @@
+  [172/175] 3784 — FAIL (0/2)
+  [173/175] 3811 — PASS (2/2)
+  [174/175] 3805 — FAIL (0/4)
+  [175/175] 3765 — FAIL (0/2)
+
+  livecodebench-v6 × local:qwen3.5-35b: pass@1 = 31/175 (17.71%)  errors=0
+
+=== code_correctness scorecard ===
+suite                model                        pass@1     n      errors
+livecodebench-v6     local:qwen3.5-35b            17.71% (31/175) 175    0     
+Running livecodebench-v6 × flash-moe:397b (flash-moe-397B-Q3) — 175 problems, dry_run=False
+  [1/175] abc387_b — PASS (3/3)
+  [2/175] abc387_f — FAIL (0/3)
+  [3/175] abc387_a — PASS (4/4)
+  [4/175] abc387_c — FAIL (0/3)
+  [5/175] abc388_d — FAIL (0/3)
+  [6/175] abc388_b — PASS (2/2)
+  [7/175] abc388_g — FAIL (0/2)
+  [8/175] abc388_c — FAIL (0/3)
+  [9/175] abc388_a — PASS (2/2)
+  [10/175] abc388_f — FAIL (0/3)
+  [11/175] abc388_e — PASS (3/3)
+  [12/175] abc389_d — FAIL (0/3)
+  [13/175] abc389_b — PASS (2/2)
+  [14/175] abc389_a — PASS (2/2)
+  [15/175] abc389_g — FAIL (0/3)
+  [16/175] abc389_f — FAIL (0/3)
+  [17/175] abc389_e — FAIL (0/2)
+  [18/175] abc390_e — FAIL (0/2)
+  [19/175] abc390_g — FAIL (0/3)
+  [20/175] abc390_a — PASS (4/4)
+  [21/175] abc390_b — PASS (3/3)
+  [22/175] abc390_d — FAIL (0/3)
+  [23/175] abc390_f — FAIL (0/3)
+  [24/175] abc390_c — FAIL (0/3)
+  [25/175] abc391_d — FAIL (0/2)
+  [26/175] abc391_f — FAIL (0/3)
+  [27/175] abc391_a — PASS (2/2)
+  [28/175] abc391_e — FAIL (0/2)
+  [29/175] abc391_g — FAIL (0/3)
+  [30/175] abc391_b — PASS (2/2)
+  [31/175] abc392_a — PASS (2/2)
+  [32/175] abc392_g — PASS (3/3)
+  [33/175] abc392_b — PASS (3/3)
+  [34/175] abc392_d — PASS (2/2)
+  [35/175] abc392_f — FAIL (0/2)
+  [36/175] abc392_c — FAIL (0/2)
+  [37/175] abc393_a — PASS (2/2)
+  [38/175] abc393_f — FAIL (0/2)
+  [39/175] abc393_e — FAIL (0/3)
+  [40/175] abc393_d — FAIL (0/3)
+  [41/175] abc393_b — PASS (3/3)
+  [42/175] abc394_c — FAIL (0/3)
+  [43/175] abc394_b — PASS (2/2)
+  [44/175] abc394_f — FAIL (0/3)
+  [45/175] abc394_a — PASS (3/3)
+  [46/175] abc394_g — FAIL (0/1)
+  [47/175] abc394_d — PASS (3/3)
+  [48/175] abc394_e — FAIL (0/2)
+  [49/175] abc395_c — PASS (3/3)
+  [50/175] abc395_f — FAIL (0/4)
+  [51/175] abc395_b — FAIL (0/4)
+  [52/175] abc395_a — PASS (3/3)
+  [53/175] abc395_e — FAIL (0/4)
+  [54/175] abc396_g — FAIL (0/3)
+  [55/175] abc396_c — FAIL (0/3)
+  [56/175] abc396_f — FAIL (0/3)
+  [57/175] abc396_b — FAIL (0/2)
+  [58/175] abc396_e — FAIL (0/3)
+  [59/175] abc396_d — FAIL (0/3)
+  [60/175] abc396_a — PASS (5/5)
+  [61/175] abc397_d — FAIL (0/3)
+  [62/175] abc397_f — FAIL (0/2)
+  [63/175] abc397_c — PASS (2/2)
+  [64/175] abc397_g — FAIL (0/3)
+  [65/175] abc397_e — FAIL (0/2)
+  [66/175] abc397_a — PASS (3/3)
+  [67/175] abc397_b — FAIL (2/3)
+  [68/175] abc398_f — FAIL (2/3)
+  [69/175] abc398_b — PASS (4/4)
+  [70/175] abc398_d — FAIL (0/3)
+  [71/175] abc398_a — PASS (2/2)
+  [72/175] abc398_c — PASS (2/2)
+  [73/175] abc398_g — FAIL (0/3)
+  [74/175] abc399_e — FAIL (0/4)
+  [75/175] abc399_d — FAIL (0/1)
+  [76/175] abc399_a — PASS (4/4)
+  [77/175] abc399_c — PASS (3/3)
+  [78/175] abc399_f — FAIL (0/3)
+  [79/175] abc399_b — PASS (4/4)
+  [80/175] abc400_c — FAIL (0/3)
+  [81/175] abc400_d — FAIL (0/4)
+  [82/175] abc400_a — PASS (3/3)
+  [83/175] abc400_b — PASS (4/4)
+  [84/175] abc400_e — FAIL (0/1)
+  [85/175] abc400_g — FAIL (0/2)
+  [86/175] arc190_c — FAIL (0/2)
+  [87/175] arc190_a — FAIL (0/4)
+  [88/175] arc190_d — FAIL (0/3)
+  [89/175] arc191_d — FAIL (1/3)
+  [90/175] arc191_c — FAIL (0/1)
+  [91/175] arc191_a — FAIL (0/3)
+  [92/175] arc192_e — FAIL (0/3)
+  [93/175] arc192_b — FAIL (0/3)
+  [94/175] arc192_d — FAIL (0/3)
+  [95/175] arc192_a — FAIL (0/3)
+  [96/175] arc193_b — FAIL (0/2)
+  [97/175] arc193_a — FAIL (0/2)
+  [98/175] arc193_d — FAIL (0/1)
+  [99/175] arc194_c — FAIL (0/3)
+  [100/175] arc194_b — FAIL (0/3)
+  [101/175] arc194_e — FAIL (0/2)
+  [102/175] arc194_a — FAIL (0/3)
+  [103/175] arc194_d — FAIL (0/2)
+  [104/175] arc195_e — FAIL (0/3)
+  [105/175] arc195_b — FAIL (0/3)
+  [106/175] arc195_c — FAIL (0/1)
+  [107/175] arc195_d — FAIL (0/1)
+  [108/175] arc195_a — PASS (3/3)
+  [109/175] arc196_b — FAIL (0/1)
+  [110/175] arc196_c — FAIL (0/3)
+  [111/175] arc196_a — FAIL (0/3)
+  [112/175] arc196_d — FAIL (0/2)
+  [113/175] 3708 — FAIL (0/3)
+  [114/175] 3677 — FAIL (0/2)
+  [115/175] 3720 — FAIL (0/4)
+  [116/175] 3674 — FAIL (0/2)
+  [117/175] 3731 — FAIL (0/2)
+  [118/175] 3714 — FAIL (0/3)
+  [119/175] 3737 — FAIL (0/2)
+  [120/175] 3725 — FAIL (0/2)
+  [121/175] 3704 — FAIL (0/3)
+  [122/175] 3721 — FAIL (0/3)
+  [123/175] 3751 — FAIL (0/2)
+  [124/175] 3753 — FAIL (0/2)
+  [125/175] 3754 — FAIL (0/2)
+  [126/175] 3697 — FAIL (0/3)
+  [127/175] 3748 — FAIL (0/3)
+  [128/175] 3760 — FAIL (0/3)
+  [129/175] 3696 — FAIL (0/3)
+  [130/175] 3762 — FAIL (0/2)
+  [131/175] 3709 — PASS (2/2)
+  [132/175] 3779 — FAIL (0/2)
+  [133/175] 3771 — FAIL (0/3)
+  [134/175] 3733 — FAIL (0/4)
+  [135/175] 3768 — FAIL (0/2)
+  [136/175] 3764 — FAIL (0/2)
+  [137/175] 3781 — FAIL (0/3)
+  [138/175] 3705 — FAIL (0/3)
+  [139/175] 3786 — FAIL (0/2)
+  [140/175] 3722 — FAIL (0/2)
+  [141/175] 3770 — FAIL (0/3)
+  [142/175] 3759 — GENERATION ERROR: timed out
+  [143/175] 3791 — GENERATION ERROR: timed out
+  [144/175] 3789 — GENERATION ERROR: timed out
+  [145/175] 3788 — GENERATION ERROR: timed out
+  [146/175] 3750 — GENERATION ERROR: timed out
+  [147/175] 3795 — GENERATION ERROR: timed out
+  [148/175] 3801 — GENERATION ERROR: timed out
+  [149/175] 3817 — GENERATION ERROR: timed out
+  [150/175] 3809 — GENERATION ERROR: timed out
+  [151/175] 3794 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [152/175] 3744 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [153/175] 3832 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [154/175] 3793 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [155/175] 3717 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [156/175] 3773 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [157/175] 3777 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [158/175] 3747 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [159/175] 3687 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [160/175] 3739 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [161/175] 3736 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [162/175] 3743 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [163/175] 3701 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [164/175] 3723 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [165/175] 3763 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [166/175] 3692 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [167/175] 3778 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [168/175] 3785 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [169/175] 3776 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [170/175] 3783 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [171/175] 3799 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [172/175] 3784 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [173/175] 3811 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [174/175] 3805 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+  [175/175] 3765 — GENERATION ERROR: flash-moe request failed: <urlopen error [Errno 60] Operation timed out>
+
+  livecodebench-v6 × flash-moe:397b: pass@1 = 35/141 (24.82%)  errors=34
+
+=== code_correctness scorecard ===
+suite                model                        pass@1     n      errors
+livecodebench-v6     flash-moe:397b               24.82% (35/141) 141    34    
+Running livecodebench-v6 × flash-moe:397b (flash-moe-397B-Q3) — 1 problems, dry_run=False
+  [1/1] abc387_b — cached (PASS)
+
+  livecodebench-v6 × flash-moe:397b: pass@1 = 1/1 (100.00%)  errors=0
+
+=== code_correctness scorecard ===
+suite                model                        pass@1     n      errors
+livecodebench-v6     flash-moe:397b               100.00% (1/1) 1      0     

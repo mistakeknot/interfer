@@ -15,7 +15,7 @@ export HOME="/Users/sma"
 cd /Users/sma/projects/Sylveste/interverse/interfer
 
 OUT="benchmarks/lcb_v6_matrix"
-LOG="${OUT}/sylveste-6f0-direct-2026-05-03.log"
+LOG="${OUT}/sylveste-6f0-direct-$(date -u +%Y-%m-%d).log"
 
 mkdir -p "$OUT"
 
