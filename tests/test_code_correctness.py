@@ -33,17 +33,17 @@ def test_resolve_config_unknown_raises():
 
 
 def test_resolve_config_deepseek_v4_aliases():
-    """Sylveste-bvh: DeepSeek V4 cloud aliases route to OpenAI-compat path."""
+    """Sylveste-bvh: DeepSeek V4 cloud aliases route via OpenRouter OpenAI-compat."""
     for alias, expected_model in [
-        ("cloud:deepseek-v4-flash", "deepseek-v4-flash"),
-        ("cloud:deepseek-v4-pro", "deepseek-v4-pro"),
+        ("cloud:deepseek-v4-flash", "deepseek/deepseek-v4-flash"),
+        ("cloud:deepseek-v4-pro", "deepseek/deepseek-v4-pro"),
     ]:
         name, cfg = cc.resolve_config(alias)
         assert cfg["backend"] == "cloud"
         assert cfg["provider"] == "openai"
         assert cfg["model"] == expected_model
-        assert cfg["base_url"] == "https://api.deepseek.com"
-        assert cfg["api_key_env"] == "DEEPSEEK_API_KEY"
+        assert cfg["base_url"] == "https://openrouter.ai/api/v1"
+        assert cfg["api_key_env"] == "OPENROUTER_API_KEY"
         assert cfg["reasoning_effort"] == "high"
 
 
@@ -63,14 +63,14 @@ def test_generate_cloud_openai_compat_missing_key(monkeypatch):
     """OpenAI-compat path raises a clear error when api_key_env is missing."""
     from benchmarks.holistic_benchmark import _generate_cloud_openai_compat
 
-    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     cfg = {
         "provider": "openai",
-        "model": "deepseek-v4-flash",
-        "base_url": "https://api.deepseek.com",
-        "api_key_env": "DEEPSEEK_API_KEY",
+        "model": "deepseek/deepseek-v4-flash",
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key_env": "OPENROUTER_API_KEY",
     }
-    with pytest.raises(RuntimeError, match="DEEPSEEK_API_KEY"):
+    with pytest.raises(RuntimeError, match="OPENROUTER_API_KEY"):
         _generate_cloud_openai_compat(
             cfg,
             messages=[{"role": "user", "content": "hi"}],
