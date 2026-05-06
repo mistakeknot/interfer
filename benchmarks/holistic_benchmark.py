@@ -217,9 +217,30 @@ CONFIG_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "cloud-claude-sonnet-4": {
         "backend": "cloud",
+        "provider": "anthropic",
         "model": "claude-sonnet-4-20250514",
         "label": "Claude Sonnet 4 (Anthropic API)",
         "description": "Cloud Claude Sonnet — needs ANTHROPIC_API_KEY + credits",
+    },
+    "cloud-deepseek-v4-flash": {
+        "backend": "cloud",
+        "provider": "openai",
+        "model": "deepseek-v4-flash",
+        "base_url": "https://api.deepseek.com",
+        "api_key_env": "DEEPSEEK_API_KEY",
+        "reasoning_effort": "high",
+        "label": "DeepSeek V4 Flash (high reasoning)",
+        "description": "DeepSeek V4 Flash via OpenAI-compat — needs DEEPSEEK_API_KEY",
+    },
+    "cloud-deepseek-v4-pro": {
+        "backend": "cloud",
+        "provider": "openai",
+        "model": "deepseek-v4-pro",
+        "base_url": "https://api.deepseek.com",
+        "api_key_env": "DEEPSEEK_API_KEY",
+        "reasoning_effort": "high",
+        "label": "DeepSeek V4 Pro (high reasoning)",
+        "description": "DeepSeek V4 Pro via OpenAI-compat — needs DEEPSEEK_API_KEY",
     },
 }
 
@@ -401,17 +422,38 @@ def _generate_flashmoe(
 
 
 def _generate_cloud(
-    model: str,
+    config: dict | str,
     messages: list[dict],
     max_tokens: int,
     timeout: float = 300.0,
+) -> dict[str, Any]:
+    """Generate via a cloud provider — Anthropic or any OpenAI-compatible endpoint.
+
+    Dispatches on `config["provider"]`; when called with a bare model string,
+    defaults to Anthropic for back-compat with older call sites.
+    """
+    if isinstance(config, str):
+        config = {"provider": "anthropic", "model": config}
+
+    provider = config.get("provider", "anthropic")
+    if provider == "anthropic":
+        return _generate_cloud_anthropic(config["model"], messages, max_tokens, timeout)
+    if provider == "openai":
+        return _generate_cloud_openai_compat(config, messages, max_tokens, timeout)
+    raise ValueError(f"Unknown cloud provider: {provider!r}")
+
+
+def _generate_cloud_anthropic(
+    model: str,
+    messages: list[dict],
+    max_tokens: int,
+    timeout: float,
 ) -> dict[str, Any]:
     """Generate with Claude API."""
     from anthropic import Anthropic
 
     client = Anthropic(timeout=timeout)
 
-    # Separate system message if present
     system_msg = None
     chat_messages = []
     for m in messages:
@@ -440,7 +482,61 @@ def _generate_cloud(
         "output_text": output_text,
         "tokens_generated": n_tokens,
         "elapsed_s": round(elapsed, 3),
-        "ttft_s": 0,  # not meaningful for cloud
+        "ttft_s": 0,
+        "gen_tps": round(n_tokens / elapsed if elapsed > 0 else 0, 2),
+        "peak_mem_gb": 0,
+    }
+
+
+def _generate_cloud_openai_compat(
+    config: dict,
+    messages: list[dict],
+    max_tokens: int,
+    timeout: float,
+) -> dict[str, Any]:
+    """Generate via any OpenAI-compatible chat-completions endpoint.
+
+    Reads `model`, `base_url`, `api_key_env`, and optional `reasoning_effort`
+    from `config`. Works for DeepSeek (api.deepseek.com), Together, Groq,
+    Fireworks, and any other provider that implements `/v1/chat/completions`.
+    """
+    api_key_env = config.get("api_key_env", "OPENAI_API_KEY")
+    api_key = os.environ.get(api_key_env)
+    if not api_key:
+        raise RuntimeError(
+            f"Cloud provider {config.get('provider')!r} requires "
+            f"{api_key_env} in the environment"
+        )
+
+    from openai import OpenAI
+
+    client = OpenAI(
+        api_key=api_key,
+        base_url=config["base_url"],
+        timeout=timeout,
+    )
+
+    kwargs: dict[str, Any] = {
+        "model": config["model"],
+        "max_tokens": max_tokens,
+        "messages": messages,
+    }
+    if "reasoning_effort" in config:
+        kwargs["reasoning_effort"] = config["reasoning_effort"]
+
+    t_start = time.monotonic()
+    response = client.chat.completions.create(**kwargs)
+    t_end = time.monotonic()
+
+    elapsed = t_end - t_start
+    output_text = response.choices[0].message.content or ""
+    n_tokens = response.usage.completion_tokens if response.usage else 0
+
+    return {
+        "output_text": output_text,
+        "tokens_generated": n_tokens,
+        "elapsed_s": round(elapsed, 3),
+        "ttft_s": 0,
         "gen_tps": round(n_tokens / elapsed if elapsed > 0 else 0, 2),
         "peak_mem_gb": 0,
     }
@@ -625,7 +721,7 @@ def stage_generate(
                         )
                     elif config["backend"] == "cloud":
                         result = _generate_cloud(
-                            config["model"],
+                            config,
                             prompt["messages"],
                             prompt.get("max_tokens", 512),
                             timeout=timeout,

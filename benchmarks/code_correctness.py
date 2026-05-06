@@ -67,6 +67,8 @@ MODEL_ALIASES: dict[str, str] = {
     "flash-moe:397b-4bit": "flashmoe-4bit",
     "cloud": "cloud",
     "cloud:claude-sonnet-4": "cloud",
+    "cloud:deepseek-v4-flash": "cloud-deepseek-v4-flash",
+    "cloud:deepseek-v4-pro": "cloud-deepseek-v4-pro",
 }
 # Dropped 2026-04-29 (Sylveste-2ss): local:qwen3.5-9b, qwen3.5-35b, qwen3.5-122b,
 # qwen3.6-27b, qwen3.6-35b-dwq, qwen3.6-35b-dwq-thinking. See CONFIG_REGISTRY
@@ -150,7 +152,7 @@ def _dispatch_generator(
     if backend == "flash-moe":
         return _generate_flashmoe(config, messages, max_tokens, timeout=timeout)
     if backend == "cloud":
-        return _generate_cloud(config["model"], messages, max_tokens, timeout=timeout)
+        return _generate_cloud(config, messages, max_tokens, timeout=timeout)
     if backend == "codex":
         return _generate_codex(config, messages, max_tokens, timeout=timeout)
     raise ValueError(f"Unknown backend: {backend}")

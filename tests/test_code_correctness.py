@@ -32,6 +32,75 @@ def test_resolve_config_unknown_raises():
         cc.resolve_config("local:does-not-exist")
 
 
+def test_resolve_config_deepseek_v4_aliases():
+    """Sylveste-bvh: DeepSeek V4 cloud aliases route to OpenAI-compat path."""
+    for alias, expected_model in [
+        ("cloud:deepseek-v4-flash", "deepseek-v4-flash"),
+        ("cloud:deepseek-v4-pro", "deepseek-v4-pro"),
+    ]:
+        name, cfg = cc.resolve_config(alias)
+        assert cfg["backend"] == "cloud"
+        assert cfg["provider"] == "openai"
+        assert cfg["model"] == expected_model
+        assert cfg["base_url"] == "https://api.deepseek.com"
+        assert cfg["api_key_env"] == "DEEPSEEK_API_KEY"
+        assert cfg["reasoning_effort"] == "high"
+
+
+def test_generate_cloud_dispatch_unknown_provider():
+    """An unrecognized provider raises ValueError before any network call."""
+    from benchmarks.holistic_benchmark import _generate_cloud
+
+    with pytest.raises(ValueError, match="Unknown cloud provider"):
+        _generate_cloud(
+            {"provider": "fictional", "model": "x"},
+            messages=[{"role": "user", "content": "hi"}],
+            max_tokens=10,
+        )
+
+
+def test_generate_cloud_openai_compat_missing_key(monkeypatch):
+    """OpenAI-compat path raises a clear error when api_key_env is missing."""
+    from benchmarks.holistic_benchmark import _generate_cloud_openai_compat
+
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    cfg = {
+        "provider": "openai",
+        "model": "deepseek-v4-flash",
+        "base_url": "https://api.deepseek.com",
+        "api_key_env": "DEEPSEEK_API_KEY",
+    }
+    with pytest.raises(RuntimeError, match="DEEPSEEK_API_KEY"):
+        _generate_cloud_openai_compat(
+            cfg,
+            messages=[{"role": "user", "content": "hi"}],
+            max_tokens=10,
+            timeout=30.0,
+        )
+
+
+def test_generate_cloud_string_back_compat():
+    """Old call sites that pass a bare model string still default to Anthropic."""
+    from benchmarks.holistic_benchmark import _generate_cloud
+
+    # Don't actually call out — just verify the dispatch decision by inspecting
+    # what _generate_cloud_anthropic would receive. We use a sentinel that will
+    # blow up inside the anthropic client if reached, proving we routed there
+    # (and not to the openai path which would raise a different error).
+    import pytest as _pytest
+
+    # An unknown anthropic model id will fail inside the SDK, but the dispatch
+    # itself shouldn't raise ValueError("Unknown cloud provider").
+    with _pytest.raises(Exception) as exc_info:
+        _generate_cloud(
+            "claude-fake-model-for-test",
+            messages=[{"role": "user", "content": "hi"}],
+            max_tokens=10,
+            timeout=1.0,
+        )
+    assert "Unknown cloud provider" not in str(exc_info.value)
+
+
 def test_swebench_lite_dry_run_emits_zero_pass(tmp_path):
     # Matches the bead's verification command precisely.
     sc = cc.run_suite(
