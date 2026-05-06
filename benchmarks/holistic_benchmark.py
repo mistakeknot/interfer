@@ -497,8 +497,15 @@ def _generate_cloud_openai_compat(
     """Generate via any OpenAI-compatible chat-completions endpoint.
 
     Reads `model`, `base_url`, `api_key_env`, and optional `reasoning_effort`
-    from `config`. Works for DeepSeek (api.deepseek.com), Together, Groq,
-    Fireworks, and any other provider that implements `/v1/chat/completions`.
+    from `config`. Works for DeepSeek (api.deepseek.com), OpenRouter, Together,
+    Groq, Fireworks, and any other provider that implements `/v1/chat/completions`.
+
+    Streams the response. Two reasons:
+      1. OpenRouter (and some upstream providers it routes to) prefix non-stream
+         response bodies with leading whitespace, which the openai SDK 2.x
+         can't parse. SSE sidesteps this — each line is parsed independently.
+      2. Streaming gives us a real TTFT measurement for cloud-vs-local latency
+         comparisons.
     """
     api_key_env = config.get("api_key_env", "OPENAI_API_KEY")
     api_key = os.environ.get(api_key_env)
@@ -520,23 +527,43 @@ def _generate_cloud_openai_compat(
         "model": config["model"],
         "max_tokens": max_tokens,
         "messages": messages,
+        "stream": True,
+        "stream_options": {"include_usage": True},
     }
     if "reasoning_effort" in config:
         kwargs["reasoning_effort"] = config["reasoning_effort"]
 
     t_start = time.monotonic()
-    response = client.chat.completions.create(**kwargs)
+    t_first_token: float | None = None
+    output_chunks: list[str] = []
+    n_tokens = 0
+    stream = client.chat.completions.create(**kwargs)
+    for event in stream:
+        if not event.choices:
+            # final usage-only event arrives with empty choices and a usage block
+            if event.usage:
+                n_tokens = event.usage.completion_tokens
+            continue
+        delta = event.choices[0].delta
+        chunk = delta.content if delta and delta.content else ""
+        if chunk:
+            if t_first_token is None:
+                t_first_token = time.monotonic()
+            output_chunks.append(chunk)
     t_end = time.monotonic()
 
     elapsed = t_end - t_start
-    output_text = response.choices[0].message.content or ""
-    n_tokens = response.usage.completion_tokens if response.usage else 0
+    ttft = (t_first_token - t_start) if t_first_token is not None else 0
+    output_text = "".join(output_chunks)
+    if n_tokens == 0:
+        # Provider didn't return usage — fall back to a rough char-based estimate
+        n_tokens = max(1, len(output_text) // 4)
 
     return {
         "output_text": output_text,
         "tokens_generated": n_tokens,
         "elapsed_s": round(elapsed, 3),
-        "ttft_s": 0,
+        "ttft_s": round(ttft, 3),
         "gen_tps": round(n_tokens / elapsed if elapsed > 0 else 0, 2),
         "peak_mem_gb": 0,
     }
