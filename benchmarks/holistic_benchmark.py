@@ -232,6 +232,18 @@ CONFIG_REGISTRY: dict[str, dict[str, Any]] = {
         "label": "DeepSeek V4 Flash (high reasoning, via OpenRouter)",
         "description": "DeepSeek V4 Flash via OpenRouter OpenAI-compat — needs OPENROUTER_API_KEY",
     },
+    "cloud-deepseek-v4-flash-pinned": {
+        "backend": "cloud",
+        "provider": "openai",
+        "model": "deepseek/deepseek-v4-flash",
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "openrouter_provider": "deepinfra",
+        "reasoning_effort": "high",
+        "max_output_tokens": 32768,
+        "label": "DeepSeek V4 Flash (high reasoning, DeepInfra route, 32K budget)",
+        "description": "Pin OpenRouter to DeepInfra (verified faithful reasoning passthrough 2026-05-08). max_output_tokens=32768 to avoid 8K cap eating reasoning before code emerges — see Sylveste-bvh research.",
+    },
     "cloud-deepseek-v4-pro": {
         "backend": "cloud",
         "provider": "openai",
@@ -530,19 +542,41 @@ def _generate_cloud_openai_compat(
         "stream": True,
         "stream_options": {"include_usage": True},
     }
+    # OpenRouter prefers the unified `reasoning.effort` shape over the flat
+    # `reasoning_effort` (research finding 2026-05-08). Passing both is harmless
+    # — DeepSeek native ignores the unified one, OpenRouter prefers it. Anyone
+    # using neither still gets a clean call.
     if "reasoning_effort" in config:
         kwargs["reasoning_effort"] = config["reasoning_effort"]
+
+    extra_body: dict[str, Any] = {}
+    if "openrouter_provider" in config:
+        # Pin OpenRouter routing to a specific upstream (e.g., "deepseek" for
+        # first-party rather than Novita/Together). Required to get faithful
+        # reasoning passthrough on DeepSeek V4.
+        extra_body["provider"] = {"only": [config["openrouter_provider"]]}
+    if "reasoning_effort" in config:
+        # Unified OpenRouter reasoning shape — ignored by direct providers.
+        extra_body.setdefault("reasoning", {})["effort"] = config["reasoning_effort"]
+    if extra_body:
+        kwargs["extra_body"] = extra_body
 
     t_start = time.monotonic()
     t_first_token: float | None = None
     output_chunks: list[str] = []
+    reasoning_chunks: list[str] = []
     n_tokens = 0
+    n_reasoning_tokens = 0
     stream = client.chat.completions.create(**kwargs)
     for event in stream:
         if not event.choices:
             # final usage-only event arrives with empty choices and a usage block
             if event.usage:
                 n_tokens = event.usage.completion_tokens
+                # OpenRouter exposes reasoning tokens when present
+                details = getattr(event.usage, "completion_tokens_details", None)
+                if details:
+                    n_reasoning_tokens = getattr(details, "reasoning_tokens", 0) or 0
             continue
         delta = event.choices[0].delta
         chunk = delta.content if delta and delta.content else ""
@@ -550,6 +584,10 @@ def _generate_cloud_openai_compat(
             if t_first_token is None:
                 t_first_token = time.monotonic()
             output_chunks.append(chunk)
+        # OpenRouter & some providers stream reasoning as a separate delta field
+        reasoning_chunk = getattr(delta, "reasoning", None) if delta else None
+        if reasoning_chunk:
+            reasoning_chunks.append(reasoning_chunk)
     t_end = time.monotonic()
 
     elapsed = t_end - t_start
@@ -558,6 +596,9 @@ def _generate_cloud_openai_compat(
     if n_tokens == 0:
         # Provider didn't return usage — fall back to a rough char-based estimate
         n_tokens = max(1, len(output_text) // 4)
+    # Telemetry-only — never affects pass@1 scoring
+    if n_reasoning_tokens == 0 and reasoning_chunks:
+        n_reasoning_tokens = max(1, sum(len(c) for c in reasoning_chunks) // 4)
 
     return {
         "output_text": output_text,

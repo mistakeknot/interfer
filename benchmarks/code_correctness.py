@@ -68,6 +68,7 @@ MODEL_ALIASES: dict[str, str] = {
     "cloud": "cloud",
     "cloud:claude-sonnet-4": "cloud",
     "cloud:deepseek-v4-flash": "cloud-deepseek-v4-flash",
+    "cloud:deepseek-v4-flash-pinned": "cloud-deepseek-v4-flash-pinned",
     "cloud:deepseek-v4-pro": "cloud-deepseek-v4-pro",
 }
 # Dropped 2026-04-29 (Sylveste-2ss): local:qwen3.5-9b, qwen3.5-35b, qwen3.5-122b,
@@ -330,8 +331,13 @@ def run_suite(
             elif dry_run:
                 gen = _stub_generator(prompt_text)
             else:
+                # Reasoning models (V4 Flash high-effort: ~2400 reasoning tokens
+                # before code on average) need substantially more headroom than
+                # the 8192 default. Per-config override; non-reasoning models
+                # keep the original 8192 to avoid wasting context.
+                cfg_max = config.get("max_output_tokens", 8192)
                 gen = _dispatch_generator(
-                    config, prompt_text, max_tokens=8192, timeout=timeout
+                    config, prompt_text, max_tokens=cfg_max, timeout=timeout
                 )
         except Exception as e:
             print(f"  [{i}/{len(problems)}] {problem_id} — GENERATION ERROR: {e}")
