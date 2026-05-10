@@ -126,5 +126,21 @@
     "results_file": "benchmarks/lcb_v6_matrix/code_correctness.jsonl",
     "started_at": "2026-05-06T18:51:29.962369+00:00",
     "finished_at": "2026-05-09T00:22:15.195704+00:00"
+  },
+  {
+    "suite": "livecodebench-v6",
+    "model": "cloud:deepseek-v4-flash-pinned",
+    "n_problems": 172,
+    "n_passed": 81,
+    "pass_at_1": 0.47093023255813954,
+    "median_gen_elapsed_s": 85.468,
+    "median_ttft_s": 17.536,
+    "median_exec_elapsed_s": 0.066,
+    "errors": 3,
+    "dry_run": false,
+    "limit": null,
+    "results_file": "benchmarks/lcb_v6_matrix/code_correctness.jsonl",
+    "started_at": "2026-05-09T01:17:51.402962+00:00",
+    "finished_at": "2026-05-09T10:54:12.850459+00:00"
   }
 ]
