@@ -53,39 +53,43 @@ DEFAULT_LENS_DIR = Path(
 )
 
 
-def load_lens_prompt(lens_name: str, lens_dir: Path) -> str:
-    """Load `fd-<name>.md`, strip YAML frontmatter, return system prompt body.
+def load_lens_prompt(lens_name: str, lens_dirs: list[Path]) -> str:
+    """Load `fd-<name>.md` from the first dir in `lens_dirs` that has it.
 
-    `lens_name` must match `[a-z0-9][a-z0-9_-]*` and the resolved path must
-    stay inside `lens_dir`; both checks block path traversal via crafted
-    lens names. Belt-and-suspenders: the regex is the primary defense and
-    the resolved-path check catches symlinks pointing outside lens_dir.
+    Strips YAML frontmatter, returns the system prompt body. Each dir is
+    validated: `lens_name` must match `[a-z0-9][a-z0-9_-]*` and the resolved
+    path must stay inside the dir (belt-and-suspenders against symlink
+    escapes). First match wins, so put overrides (e.g., 35B-tuned lenses
+    in scripts/lens-local/) ahead of the canonical plugin cache.
     """
     if not _LENS_NAME_RE.match(lens_name):
         raise SystemExit(
-            f"Invalid lens name: {lens_name!r} " f"(must match {_LENS_NAME_RE.pattern})"
+            f"Invalid lens name: {lens_name!r} (must match {_LENS_NAME_RE.pattern})"
         )
-    path = lens_dir / f"fd-{lens_name}.md"
-    resolved = path.resolve()
-    lens_dir_resolved = lens_dir.resolve()
-    try:
-        resolved.relative_to(lens_dir_resolved)
-    except ValueError:
-        raise SystemExit(
-            f"Lens path escapes lens_dir: {resolved} not under {lens_dir_resolved}"
-        )
-    if not path.exists():
-        raise SystemExit(
-            f"Lens prompt not found: {path}\n"
-            f"  set FLUX_LENS_DIR to the correct interflux agents/review directory"
-        )
-    raw = path.read_text()
-    # Strip YAML frontmatter — everything between the first --- and the second ---
-    if raw.startswith("---"):
-        end = raw.find("\n---", 3)
-        if end != -1:
-            return raw[end + 4 :].lstrip()
-    return raw
+    tried: list[Path] = []
+    for lens_dir in lens_dirs:
+        path = lens_dir / f"fd-{lens_name}.md"
+        resolved = path.resolve()
+        lens_dir_resolved = lens_dir.resolve()
+        try:
+            resolved.relative_to(lens_dir_resolved)
+        except ValueError:
+            raise SystemExit(
+                f"Lens path escapes lens_dir: {resolved} not under {lens_dir_resolved}"
+            )
+        tried.append(path)
+        if path.exists():
+            raw = path.read_text()
+            if raw.startswith("---"):
+                end = raw.find("\n---", 3)
+                if end != -1:
+                    return raw[end + 4 :].lstrip()
+            return raw
+    raise SystemExit(
+        f"Lens prompt not found: fd-{lens_name}.md\n"
+        f"  searched: {', '.join(str(p) for p in tried)}\n"
+        f"  set FLUX_LENS_DIR to override the canonical directory"
+    )
 
 
 async def run_lens(
@@ -194,9 +198,15 @@ async def main_async(args: argparse.Namespace) -> int:
         return 2
     diff = diff_path.read_text()
     lens_names = [s.strip() for s in args.lens.split(",") if s.strip()]
-    lens_dir = Path(args.lens_dir)
+    # Build the lens-dir fallback chain: overrides first, then canonical.
+    # Lets us ship local-tuned variants in scripts/lens-local/ while still
+    # falling back to the full plugin cache for any lens not yet slimmed.
+    lens_dirs: list[Path] = []
+    if args.override_lens_dir:
+        lens_dirs.append(Path(args.override_lens_dir))
+    lens_dirs.append(Path(args.lens_dir))
 
-    prompts = {name: load_lens_prompt(name, lens_dir) for name in lens_names}
+    prompts = {name: load_lens_prompt(name, lens_dirs) for name in lens_names}
 
     print(
         f"flux-local — {len(lens_names)} lenses, model={args.model}, "
@@ -275,7 +285,15 @@ def main() -> int:
     parser.add_argument(
         "--lens-dir",
         default=str(DEFAULT_LENS_DIR),
-        help=f"Directory containing fd-*.md prompts (default: {DEFAULT_LENS_DIR})",
+        help=f"Directory containing canonical fd-*.md prompts (default: {DEFAULT_LENS_DIR})",
+    )
+    parser.add_argument(
+        "--override-lens-dir",
+        default=None,
+        help=(
+            "Optional first-priority dir for slimmed/tuned lens variants. "
+            "Lenses found here win over --lens-dir. Useful for local-model overrides."
+        ),
     )
     args = parser.parse_args()
     try:

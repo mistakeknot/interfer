@@ -15,3 +15,4 @@ Use these to:
 | File | Diff | Model | Lenses | Wall | Notes |
 |---|---|---|---|---|---|
 | `2026-05-10-flux-local-3f60481.txt` | flux-local.py initial commit (~10 KB diff) | Qwen3.6-35B-A3B-4bit | correctness, safety, quality | 6 min | correctness + safety produced real findings; quality lens degenerated into "I will be precise..." loop |
+| `2026-05-11-flux-local-3f60481-slimmed-quality.txt` | flux-local.py initial commit (~10 KB diff) | Qwen3.6-35B-A3B-4bit | quality (slimmed) | 35s | Slimmed Python-only quality lens, explicit output schema, "no preamble" instruction. 3 real findings: import-inside-function, SystemExit-from-helper, bare dict type hint. **5× faster, ~2× fewer tokens, and actually useful** — validates brainstorm Step 3. |

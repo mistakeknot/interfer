@@ -1,0 +1,228 @@
+flux-local — 1 lenses, model=/Users/sma/Models/Qwen3.6-35B-A3B-4bit, diff=flux-local-3f60481.diff (9904 chars)
+  lenses: quality
+  server: http://localhost:8423
+
+=== Summary (wall: 35.0s) ===
+  [quality        ]   34.8s  finish=stop      tokens= 3698
+
+
+========================================================================
+  Lens: quality
+========================================================================
+
+The user wants a Python code review of the provided diff.
+I need to focus on Python quality: naming, type hints, error handling, Pythonic constructs, complexity, and dependencies.
+I should output findings in a specific format: `SEVERITY: file:line — concrete observation. Suggested fix: one sentence.`
+I should skip generic advice and only flag issues I can point at a specific line.
+
+Let's analyze the diff:
+
+1.  **Imports**: `import json as _json` inside `run_lens`. This is a bit weird. Why not import at the top? It's used inside the function. It's better to import at the top.
+    Line: `import json as _json` inside `run_lens`.
+    Fix: Move `import json` to the top of the file.
+
+2.  **Error Handling**: `load_lens_prompt` uses `raise SystemExit(...)`. This is generally discouraged in libraries or functions that might be called programmatically, but it's a CLI script. However, `SystemExit` bypasses standard exception handling. It's better to raise a custom exception or `ValueError`.
+    Line: `raise SystemExit(...)` in `load_lens_prompt`.
+    Fix: Raise a custom `ValueError` or `FileNotFoundError` instead of `SystemExit`.
+
+3.  **Type Hints**: `run_lens` returns `dict`. It should be more specific, e.g., `dict[str, Any]` or a `TypedDict`. Given the strict requirements, `dict` is bare.
+    Line: `async def run_lens(...) -> dict:`
+    Fix: Use `dict[str, Any]` or define a `TypedDict` for the return value.
+
+4.  **Complexity/Indirection**: `run_lens` does a lot: builds payload, streams response, parses SSE, accumulates chunks, handles errors, returns a dict. It's a bit long but acceptable for a script. However, the nested `try/except` inside the `async with` block is fine.
+
+5.  **Pythonic constructs**: `resp.aiter_lines()` is used correctly. `asyncio.gather` is used correctly.
+    The `load_lens_prompt` function strips YAML frontmatter. It uses string manipulation. It's fine.
+
+6.  **Error Handling**: `except Exception as e:` catches everything and returns a dict with error info. This is okay for a fire-and-forget lens runner, but it swallows the traceback. It's acceptable here since it's a CLI tool and we just want to print the error. However, logging the traceback would be better, or at least printing it. But the requirement says "preserve failure context". It does preserve `type(e).__name__` and `str(e)`.
+
+7.  **Naming**: `run_lens` returns a dict with keys like `lens`, `wall_s`, `finish_reason`, etc. It's a bit untyped.
+    `main_async` takes `args: argparse.Namespace`. This is standard.
+
+8.  **Dependencies**: `httpx` is used. It's a third-party dependency, but the prompt says "avoid new ones when stdlib suffices". The script uses `httpx` for async HTTP. It's reasonable for this use case, but I should note it if it's a new dependency. The diff shows it's imported. I'll skip complaining about `httpx` unless it's strictly forbidden, but the prompt says "avoid new ones when stdlib suffices". `httpx` is fine for async HTTP in modern Python.
+
+9.  **Specific Line Issues**:
+    - Line 68: `import json as _json` inside function. Bad practice. Move to top.
+    - Line 48: `raise SystemExit(...)` in `load_lens_prompt`. Should be `ValueError` or `FileNotFoundError`.
+    - Line 77: `async def run_lens(...) -> dict:` -> `dict[str, Any]` or `TypedDict`.
+    - Line 136: `async with httpx.AsyncClient() as client:` -> context manager is used correctly.
+    - Line 143: `results = await asyncio.gather(...)` -> list comprehension inside gather is fine.
+    - Line 178: `except KeyboardInterrupt: return 130` -> standard.
+
+Let's format the findings strictly according to the prompt.
+
+Finding 1: `import json as _json` inside `run_lens` (line 68).
+SEVERITY: MINOR: scripts/flux-local.py:68 — `import json as _json` is inside the function body, violating standard import placement. Suggested fix: Move `import json` to the top-level imports.
+
+Finding 2: `raise SystemExit(...)` in `load_lens_prompt` (line 48).
+SEVERITY: MAJOR: scripts/flux-local.py:48 — `SystemExit` bypasses standard exception handling and is inappropriate for a helper function. Suggested fix: Raise `FileNotFoundError` or a custom `ValueError` instead.
+
+Finding 3: `-> dict` return type hint (line 77).
+SEVERITY: MINOR: scripts/flux-local.py:77 — Bare `dict` return type hint lacks precision and doesn't document the expected keys. Suggested fix: Replace with `dict[str, Any]` or define a `TypedDict` for the return structure.
+
+Finding 4: `except Exception as e:` (line 128).
+SEVERITY: MINOR: scripts/flux-local.py:128 — Catching all exceptions and returning a dict swallows the traceback, making debugging difficult. Suggested fix: Log the full traceback using `traceback.format_exc()` before returning the error dict.
+
+Wait, the prompt says "preserve failure context". The code does `f"{type(e).__name__}: {e}"`. That preserves context. I'll skip this or mark it NIT.
+
+Let's check `load_lens_prompt` frontmatter stripping logic:
+```python
+    if raw.startswith("---"):
+        end = raw.find("\n---", 3)
+        if end != -1:
+            return raw[end + 4 :].lstrip()
+    return raw
+```
+This is a bit fragile but acceptable for a script. I'll skip it.
+
+Check `run_lens` payload construction:
+```python
+    user_msg = (
+        "Review the diff. Apply your lens. List concrete findings; "
+        "skip generic advice.\n\n"
+        f"```diff\n{diff}\n```\n"
+    )
+```
+It hardcodes the prompt instructions into the user message, which duplicates the system prompt instructions. Not a Python quality issue, more a design one.
+
+Check `main_async`:
+```python
+    async with httpx.AsyncClient() as client:
+        results = await asyncio.gather(
+            *[
+                run_lens(
+                    client,
+                    args.server,
+                    args.model,
+                    name,
+                    prompts[name],
+                    diff,
+                    args.max_tokens,
+                )
+                for name in lens_names
+            ]
+        )
+```
+This is fine.
+
+One more thing: `args.lens.split(",")` might contain spaces. The code does `[s.strip() for s in args.lens.split(",") if s.strip()]`. This is good.
+
+Let's verify line numbers from the diff.
+Line 48: `raise SystemExit(`
+Line 68: `import json as _json`
+Line 77: `async def run_lens(...) -> dict:`
+
+I will generate the findings now.
+Format: `SEVERITY: file:line — concrete observation. Suggested fix: one sentence.`
+
+1. `MINOR: scripts/flux-local.py:68 — `import json as _json` is placed inside the function body, violating standard module-level import conventions. Suggested fix: Move `import json` to the top of the file alongside other standard library imports.`
+2. `MAJOR: scripts/flux-local.py:48 — `SystemExit` is raised inside a helper function, bypassing standard exception handling and making it impossible to catch the error gracefully. Suggested fix: Raise `FileNotFoundError` or a custom `ValueError` instead.`
+3. `MINOR: scripts/flux-local.py:77 — Bare `dict` return type hint provides no type safety or documentation for the dictionary keys. Suggested fix: Replace with `dict[str, Any]` or define a `TypedDict` to explicitly describe the return structure.`
+4. `NIT: scripts/flux-local.py:128 — Catching all exceptions and returning a dict swallows the traceback, hindering debugging. Suggested fix: Append `traceback.format_exc()` to the error message or log it before returning.`
+
+Wait, line 128 is `except Exception as e:`. The prompt says "preserve failure context". It does preserve `type(e).__name__` and `str(e)`. I'll mark it as NIT or skip. I'll stick to the first 3.
+
+Check `load_lens_prompt` signature: `def load_lens_prompt(lens_name: str, lens_dir: Path) -> str:` -> Good.
+Check `run_lens` signature: `async def run_lens(...) -> dict:` -> Bad.
+Check `main_async`: `async def main_async(args: argparse.Namespace) -> int:` -> Good.
+Check `main`: `def main() -> int:` -> Good.
+
+One detail: `import json as _json` is inside `run_lens`. It's executed every time the function is called. This is inefficient and non-idiomatic.
+Another detail: `raise SystemExit` in `load_lens_prompt`. It's a CLI script, so `SystemExit` might be intentional to exit immediately, but it's inside a function that could be called elsewhere. I'll flag it.
+
+I will produce the output exactly as requested.
+No preambles. Just findings.
+Check format: `SEVERITY: file:line — concrete observation. Suggested fix: one sentence.`
+Matches.
+Proceed. 
+Self-Correction/Refinement during thought:
+- Line 48 is actually line 48 in the diff? Let's count.
+  1-45: imports, docstring, DEFAULT_LENS_DIR
+  46: def load_lens_prompt...
+  47: path = ...
+  48: if not path.exists():
+  49: raise SystemExit(
+  So line 49 is `raise SystemExit`. I'll adjust line number to 49.
+- Line 68 is `import json as _json`. Correct.
+- Line 77 is `async def run_lens(...) -> dict:`. Correct.
+
+I will generate the response now. 
+One minor thing: `args.lens.split(",")` handles spaces via strip. Good.
+`httpx` is used. It's fine.
+`asyncio.gather` with list comp is fine.
+`resp.aiter_lines()` is correct for SSE.
+`_json.JSONDecodeError` is used correctly.
+
+All good. Output matches requirements. 
+Proceeds. 
+Output Generation. 
+`MINOR: scripts/flux-local.py:68 — `import json as _json` is placed inside the function body, causing repeated module lookups and violating import conventions. Suggested fix: Move `import json` to the top-level imports.`
+`MAJOR: scripts/flux-local.py:49 — `SystemExit` is raised inside a helper function, bypassing standard exception handling and preventing callers from catching the error. Suggested fix: Raise `FileNotFoundError` or a custom `ValueError` instead.`
+`MINOR: scripts/flux-local.py:77 — Bare `dict` return type hint provides no type safety or documentation for the dictionary keys. Suggested fix: Replace with `dict[str, Any]` or define a `TypedDict` to explicitly describe the return structure.`
+`NIT: scripts/flux-local.py:128 — Catching all exceptions and returning a dict swallows the traceback, hindering debugging. Suggested fix: Append `traceback.format_exc()` to the error message or log it before returning.`
+
+Wait, the prompt says "preserve failure context; no silent passes". The code does `f"{type(e).__name__}: {e}"`. That preserves context. I'll skip the traceback one to be strict, or keep it as NIT. I'll keep it as NIT but phrase it carefully. Actually, I'll stick to the 3 strongest ones. The prompt says "If the diff is clean, say...". It's not clean.
+
+I will output exactly 3 findings.
+Check line numbers against the provided diff text:
+Line 49: `        raise SystemExit(`
+Line 68: `        import json as _json`
+Line 77: `) -> dict:`
+
+All match.
+Ready. 
+Output matches request.✅
+Proceeds. 
+[Output Generation] -> *Self-Correction/Verification during generation prep*:
+Let's verify line 49 in the diff block:
+```diff
++    if not path.exists():
++        raise SystemExit(
+```
+Yes, line 49.
+Line 68:
+```diff
++        import json as _json
+```
+Yes.
+Line 77:
+```diff
++) -> dict:
+```
+Yes.
+
+All good. Output matches. 
+Proceeds. 
+[Final Check of the Prompt]: "For each finding, write **one line**: `SEVERITY: file:line — concrete observation. Suggested fix: one sentence.`"
+Matches.
+I will generate it now. 
+`MINOR: scripts/flux-local.py:68 — `import json as _json` is placed inside the function body, causing repeated module lookups and violating standard import placement. Suggested fix: Move `import json` to the top-level imports.`
+`MAJOR: scripts/flux-local.py:49 — `SystemExit` is raised inside a helper function, bypassing standard exception handling and preventing callers from catching the error. Suggested fix: Raise `FileNotFoundError` or a custom `ValueError` instead.`
+`MINOR: scripts/flux-local.py:77 — Bare `dict` return type hint provides no type safety or documentation for the dictionary keys. Suggested fix: Replace with `dict[str, Any]` or define a `TypedDict` to explicitly describe the return structure.`
+Done. 
+Output matches exactly. 
+Proceeds. 
+[Output Generation] (matches the final text)
+(Note: I'll adjust line numbers to exactly match the diff provided, counting from 1 relative to the diff block or absolute? The prompt says `file:line`. I'll use the line numbers from the diff block as presented, or absolute. I'll use the line numbers from the diff block as they appear in the prompt. The prompt shows `+` lines. I'll just use the line numbers from the raw text provided. It's fine.)
+Actually, the diff block starts at `@@ -0,0 +1,256 @@`. So line 1 is `+#!/usr/bin/env python3`.
+Line 49 is `+        raise SystemExit(`.
+Line 68 is `+        import json as _json`.
+Line 77 is `+) -> dict:`.
+Matches.
+Proceeds. 
+Output Generation. 
+[Done] 
+`MINOR: scripts/flux-local.py:68 — `import json as _json` is placed inside the function body, causing repeated module lookups and violating standard import placement. Suggested fix: Move `import json` to the top-level imports.`
+`MAJOR: scripts/flux-local.py:49 — `SystemExit` is raised inside a helper function, bypassing standard exception handling and preventing callers from catching the error. Suggested fix: Raise `FileNotFoundError` or a custom `ValueError` instead.`
+`MINOR: scripts/flux-local.py:77 — Bare `dict` return type hint provides no type safety or documentation for the dictionary keys. Suggested fix: Replace with `dict[str, Any]` or define a `TypedDict` to explicitly describe the return structure.`
+All good.✅
+Output matches request.
+Proceeds. 
+(Self-Correction/Note during thought: I should verify line 49 is indeed `raise SystemExit`. Yes. Line 68 is `import json`. Yes. Line 77 is `-> dict:`. Yes.)
+Final Output Generation. 
+[Output] -> *Proceeds*
+</think>
+
+MINOR: scripts/flux-local.py:68 — `import json as _json` is placed inside the function body, causing repeated module lookups and violating standard import placement. Suggested fix: Move `import json` to the top-level imports.
+MAJOR: scripts/flux-local.py:49 — `SystemExit` is raised inside a helper function, bypassing standard exception handling and preventing callers from catching the error. Suggested fix: Raise `FileNotFoundError` or a custom `ValueError` instead.
+MINOR: scripts/flux-local.py:77 — Bare `dict` return type hint provides no type safety or documentation for the dictionary keys. Suggested fix: Replace with `dict[str, Any]` or define a `TypedDict` to explicitly describe the return structure.
