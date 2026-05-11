@@ -23,11 +23,17 @@ from __future__ import annotations
 import argparse
 import asyncio
 import os
+import re
 import sys
 import time
 from pathlib import Path
 
 import httpx
+
+# Lens names map to filenames; restrict to safe chars to block path-traversal
+# attacks like `--lens ../etc/passwd`. Found by the safety lens reviewing its
+# own deployment infra (commit 9aed7ae, k8c spike 2026-05-10).
+_LENS_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 
 # Look for the lens prompt cache automatically. Override with FLUX_LENS_DIR
 # if you've moved the interflux plugin or want a custom directory.
@@ -48,8 +54,26 @@ DEFAULT_LENS_DIR = Path(
 
 
 def load_lens_prompt(lens_name: str, lens_dir: Path) -> str:
-    """Load `fd-<name>.md`, strip YAML frontmatter, return system prompt body."""
+    """Load `fd-<name>.md`, strip YAML frontmatter, return system prompt body.
+
+    `lens_name` must match `[a-z0-9][a-z0-9_-]*` and the resolved path must
+    stay inside `lens_dir`; both checks block path traversal via crafted
+    lens names. Belt-and-suspenders: the regex is the primary defense and
+    the resolved-path check catches symlinks pointing outside lens_dir.
+    """
+    if not _LENS_NAME_RE.match(lens_name):
+        raise SystemExit(
+            f"Invalid lens name: {lens_name!r} " f"(must match {_LENS_NAME_RE.pattern})"
+        )
     path = lens_dir / f"fd-{lens_name}.md"
+    resolved = path.resolve()
+    lens_dir_resolved = lens_dir.resolve()
+    try:
+        resolved.relative_to(lens_dir_resolved)
+    except ValueError:
+        raise SystemExit(
+            f"Lens path escapes lens_dir: {resolved} not under {lens_dir_resolved}"
+        )
     if not path.exists():
         raise SystemExit(
             f"Lens prompt not found: {path}\n"
@@ -116,6 +140,14 @@ async def run_lens(
                     obj = _json.loads(data)
                 except _json.JSONDecodeError:
                     continue
+                # Some OpenAI-compat servers emit errors mid-stream as
+                # `{"error": {...}}` inside a 200-OK response. Without this
+                # check we'd swallow the error and return empty content
+                # (caught by the correctness lens, k8c spike 2026-05-10).
+                if isinstance(obj.get("error"), dict):
+                    err = obj["error"]
+                    msg = err.get("message") or err.get("type") or str(err)
+                    raise RuntimeError(f"server error mid-stream: {msg}")
                 choice = (obj.get("choices") or [{}])[0]
                 delta = choice.get("delta") or {}
                 if "content" in delta and delta["content"]:
