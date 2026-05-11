@@ -35,6 +35,20 @@ import httpx
 # own deployment infra (commit 9aed7ae, k8c spike 2026-05-10).
 _LENS_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 
+
+class FluxLocalError(Exception):
+    """Domain exception for flux-local helper failures.
+
+    Helpers raise this instead of SystemExit so callers can catch them
+    via standard `except` handling. The CLI entry point in main() is the
+    only place that converts these into stderr messages and exit codes.
+
+    The MAJOR finding from the quality-lens slim run on 2026-05-11 flagged
+    SystemExit-from-a-helper as bypassing standard exception handling; this
+    class is the fix.
+    """
+
+
 # Look for the lens prompt cache automatically. Override with FLUX_LENS_DIR
 # if you've moved the interflux plugin or want a custom directory.
 DEFAULT_LENS_DIR = Path(
@@ -63,7 +77,7 @@ def load_lens_prompt(lens_name: str, lens_dirs: list[Path]) -> str:
     in scripts/lens-local/) ahead of the canonical plugin cache.
     """
     if not _LENS_NAME_RE.match(lens_name):
-        raise SystemExit(
+        raise FluxLocalError(
             f"Invalid lens name: {lens_name!r} (must match {_LENS_NAME_RE.pattern})"
         )
     tried: list[Path] = []
@@ -74,7 +88,7 @@ def load_lens_prompt(lens_name: str, lens_dirs: list[Path]) -> str:
         try:
             resolved.relative_to(lens_dir_resolved)
         except ValueError:
-            raise SystemExit(
+            raise FluxLocalError(
                 f"Lens path escapes lens_dir: {resolved} not under {lens_dir_resolved}"
             )
         tried.append(path)
@@ -85,7 +99,7 @@ def load_lens_prompt(lens_name: str, lens_dirs: list[Path]) -> str:
                 if end != -1:
                     return raw[end + 4 :].lstrip()
             return raw
-    raise SystemExit(
+    raise FluxLocalError(
         f"Lens prompt not found: fd-{lens_name}.md\n"
         f"  searched: {', '.join(str(p) for p in tried)}\n"
         f"  set FLUX_LENS_DIR to override the canonical directory"
@@ -298,6 +312,11 @@ def main() -> int:
     args = parser.parse_args()
     try:
         return asyncio.run(main_async(args))
+    except FluxLocalError as e:
+        # Library-level errors translate to a clean stderr + exit 2 here.
+        # Helpers raise this rather than SystemExit so they remain testable.
+        print(f"flux-local: {e}", file=sys.stderr)
+        return 2
     except KeyboardInterrupt:
         return 130
 
