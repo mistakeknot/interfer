@@ -5,66 +5,45 @@ topic: k8c flux-local ship + cosmetic findings + quality lens + Opus A/B
 beads: [Sylveste-k8c, Sylveste-bvh, Sylveste-bov, Sylveste-uk3]
 ---
 
-## Session Handoff — 2026-05-11 k8c flux-local ship + followups (G,H,I,J)
+## Session Handoff — 2026-05-11 k8c flux-local — G/H/I done, J only
 
 ### Directive
 
-> Your job is to execute G, H, I, J **in that order**. Sylveste-k8c (in_progress) covers all four. Five commits on `interfer/main` are staged but **not pushed**: `93b2d16, 5dad6cf, db05fd2, 706d345, ad55c9b`.
+> Your job is J: Opus A/B vs the local-Qwen reviews. G+H+I already shipped and pushed in this session. **Do NOT boot a fresh interfer server** for J — last run leaked Metal-worker processes that bloated Activity Monitor's "real memory" column to look like ~138 GB consumed (it was mmap accounting, not distinct RAM, but the orphans are real). All 3 diffs already on disk; reuse them via Agent calls to Opus.
 
-**G — Push and sync (5 min):**
-```bash
-cd /Users/sma/projects/Sylveste/interverse/interfer
-env -u GIT_INDEX_FILE git log --oneline origin/main..HEAD   # confirm 5 commits ahead
-env -u GIT_INDEX_FILE git push origin main
-cd /Users/sma/projects/Sylveste && bd backup sync && bd orphans && bd backup sync
-bash .beads/push.sh  # interactive — needs tty; tell user to run if blocked
-```
+**J — parallel Opus A/B (1 hr):**
+Spawn 3 parallel `Agent` calls (default `general-purpose` = Opus 4.7), one per diff. Each agent gets:
+1. The diff at `/tmp/flux-local-{3f60481,5dad6cf,db05fd2}.diff` (still on disk; regenerate via `env -u GIT_INDEX_FILE git show <hash> > /tmp/flux-local-<hash>.diff` from `interverse/interfer/` if cleared)
+2. All three **canonical** lens prompts from `~/.claude/plugins/cache/interagency-marketplace/interflux/0.2.69/agents/review/fd-{correctness,safety,quality}.md`
+3. Instruction to return findings in the same SEVERITY:file:line schema the local model uses
 
-**H — Address 4 real-but-cosmetic findings from `docs/spike-results/CALIBRATION.md` (30 min):**
-Pick file `interverse/interfer/scripts/flux-local.py`. Findings to fix or explicitly decline:
-1. MINOR `import json as _json` inside `run_lens` body — move to top-level imports
-2. MINOR bare `dict` return type hint on `run_lens` — use `dict[str, Any]` or a `TypedDict`
-3. MINOR external server URL not validated — warn (don't block) when `args.server` isn't `localhost`/`127.0.0.1`
-4. MINOR secrets in stdout output not redacted — regex-redact `sk-or-v1-*`/`sk-ant-*` patterns before printing review content
-Run `uv run pytest tests/test_code_correctness.py` after (existing tests must stay green).
+Score finding-overlap against `docs/spike-results/CALIBRATION.md`. Update CALIBRATION.md § Decision based on overlap. If >75%, promote local-default per brainstorm gate; if not, document the gap.
 
-**I — Fix the quality-lens content-loop (~45 min):**
-File `interverse/interfer/scripts/lens-local/fd-quality.md` loops on `db05fd2` diff. Try in order:
-1. Set `temperature=0.1` in `run_lens` (currently 0.3); see `scripts/flux-local.py` payload
-2. Add **2 example findings** at the bottom of the lens prompt to anchor the schema
-3. If still loops, hard-cap `--max-tokens 2048` to force commit
-Verify with: boot server (commands below), re-run `flux-local` on `/tmp/flux-local-db05fd2.diff` with `--lens quality --override-lens-dir scripts/lens-local`, eyeball that output emits `SEVERITY: file:line — ...` lines and doesn't repeat.
-
-**J — Opus A/B run on the 3 spike diffs (1 hr):**
-Take the 3 diffs in `docs/spike-results/` (capture from commits `3f60481`, `5dad6cf`, `db05fd2` via `git show <hash>`) and run each through an Opus session with the **canonical** lens prompts at `~/.claude/plugins/cache/interagency-marketplace/interflux/0.2.69/agents/review/fd-{correctness,safety,quality}.md`. Score finding-overlap against the local results in `CALIBRATION.md`. If overlap >75%, promote local-default per the brainstorm's decision gate; update `CALIBRATION.md` § Decision.
-
-**Server boot (needed for I + any flux-local re-run):**
-```bash
-cd /Users/sma/projects/Sylveste/interverse/interfer
-nohup uv run python -m server --port 8423 --preload /Users/sma/Models/Qwen3.6-35B-A3B-4bit </dev/null >/tmp/interfer.log 2>&1 &
-sleep 6; curl -s http://localhost:8423/health
-# kill after: pkill -f "python -m server --port 8423"
-```
+**No new beads needed** — Sylveste-k8c (in_progress) covers this; just update its notes when J lands.
 
 ### Dead Ends
 
-- **OpenRouter via Novita/DeepInfra for V4 Flash benchmarking** — silently caps `max_tokens` at 16384 regardless of what's requested (probe on `abc398_g`: asked 64000, got 16384 with `finish_reason='length'`, 16607 reasoning tokens, 0 text chars). Killed bvh; switched to `interrank` for cloud LCB numbers. Don't reopen unless going through native `api.deepseek.com`.
-- **`hf` CLI in homebrew Python 3.11** — missing `certifi`, ignores `uv run --with`. Use `huggingface_hub.snapshot_download` directly from project venv instead.
-- **`stdbuf` for nohup output flushing** — Homebrew coreutils' `libstdbuf.so` is x86_64; DYLD rejects when injected into arm64 Python. Use `PYTHONUNBUFFERED=1` instead.
-- **mlx-lm 0.31.1 + DeepSeek V4 Flash 4bit** — `deepseek_v4` arch NOT in mlx-lm registry yet. Model is on disk at `/Users/sma/Models/DeepSeek-V4-Flash-4bit-mlx/` (141 GB, 33 shards) but unloadable until mlx-lm adds the handler. Skipped to Qwen3.6-35B-A3B-4bit for the spike.
-- **Per-process model loading (Regime A)** — won't parallelize on M5 Max; GPU serializes Metal contexts across processes. Use Regime B: one server, N concurrent requests. The interfer server already does this.
+- **OpenRouter via Novita/DeepInfra for V4 Flash** — silently caps `max_tokens` at 16384. Probe abc398_g: asked 64000 → got 16384, `finish_reason='length'`, 16607 reasoning tokens, 0 text. Cloud LCB → use `interrank`. Don't reopen unless using native `api.deepseek.com`.
+- **`hf` CLI in homebrew Python 3.11** — missing `certifi`, ignores `uv run --with`. Use `huggingface_hub.snapshot_download` from project venv.
+- **`stdbuf` for nohup flushing** — Homebrew coreutils libstdbuf.so is x86_64; DYLD rejects in arm64 Python. Use `PYTHONUNBUFFERED=1`.
+- **mlx-lm 0.31.1 + DeepSeek V4 Flash** — `deepseek_v4` arch NOT in mlx-lm registry. Model on disk at `/Users/sma/Models/DeepSeek-V4-Flash-4bit-mlx/` (141 GB, 33 shards) but unloadable until mlx-lm adds handler. Used Qwen3.6-35B-A3B-4bit instead.
+- **Per-process model loading** — won't parallelize on M5 Max; GPU serializes Metal contexts. Use one server + N concurrent requests.
+- **NEW: interfer server orphans on `pkill`** — `pkill -f "python -m server"` kills the parent `uv run` and Starlette, but the spawned `multiprocessing` Metal-worker subprocess survives (separate process group) and keeps mmapped weights resident. Each subsequent server boot adds another ~18 GB of "real memory" in Activity Monitor (mmap accounting per process — physical pages are shared, so it's not 18 GB of *new* RAM, but reading the screenshot misleads). **Clean kill: `pkill -f "python -m server"` then also `pgrep -f "spawn_main" | xargs kill`**, or just kill the `uv run` parent pid and wait — its grandchildren reap when the kernel notices.
 
 ### Context
 
-- **5 commits staged on `interfer/main`, NOT PUSHED:** `93b2d16` (flux-local bug fixes), `5dad6cf` (lens-local override dir + slim quality), `db05fd2` (SystemExit→FluxLocalError), `706d345` (slim correctness+safety), `ad55c9b` (CALIBRATION.md). Run G first.
-- **OPENROUTER_API_KEY is in `/Users/sma/.cache/interfer/openrouter.key`** (mode 600, NOT in repo). User pasted the key in the conversation transcript on 2026-05-08; recommend rotating at openrouter.ai/keys before next session.
-- **Calibration ground truth**: 8 substantive findings from 3 spike runs, 0 hallucinations, 4 became commits, 2 true negatives, 2 quality-lens process failures. Full adjudication table in `docs/spike-results/CALIBRATION.md`. Use this as the "what local can do" baseline for J.
-- **Server endpoint**: `/v1/chat/completions` at `interverse/interfer/server/main.py:1040`. Always streams SSE (never returns JSON). flux-local handles SSE accumulation client-side. Server boots on port 8421 by default, 8423 for spike runs to avoid conflicts.
-- **Hook collision watchpoint**: `security_reminder_hook.py` does pattern-match on specific function names like the binary-deserialize one, system-shell-exec one, etc. — fires even when those terms appear in *warnings against* using them. Rephrase as "unsafe deserialization" / "system-shell calls" if you hit it writing prompts or docs.
-- **Sylveste subrepo trap**: `interverse/interfer/` is its own git repo (not a submodule). The outer monorepo `.gitignore` excludes it. All commits/pushes for k8c must be from `/Users/sma/projects/Sylveste/interverse/interfer/`. Always `env -u GIT_INDEX_FILE` prefix git commands.
-- **Key file paths for J**:
-  - Canonical lens prompts: `~/.claude/plugins/cache/interagency-marketplace/interflux/0.2.69/agents/review/fd-{correctness,safety,quality}.md`
-  - Slimmed prompts: `interverse/interfer/scripts/lens-local/fd-{correctness,safety,quality}.md`
-  - Adjudicated findings to A/B against: `interverse/interfer/docs/spike-results/CALIBRATION.md`
-  - Diffs for A/B: `git show 3f60481`, `git show 5dad6cf`, `git show db05fd2` (all from interfer subrepo)
-- **bd push.sh requires tty** — `bash .beads/push.sh` gates on interactive confirm. Tell the user to run it themselves; don't try to bypass.
+- **All 13 commits pushed** to `interfer/main`. `git log origin/main..HEAD` should be empty as of session close.
+- **2 commits pushed this session** after the handoff was first written: `a0dac81` (H — 4 cosmetic findings closed) and `8811792` (I — quality lens commits, no more loop). Confirmed via `git push origin main` → `9141d7b..8811792`.
+- **H findings closed**: top-level `json` import; `LensResult(TypedDict)` replaces bare `dict` return; warn-on-non-loopback `--server`; `_redact_secrets()` covers `sk-or-v1-*`, `sk-ant-*`, `sk-proj-*`, `ghp_*`, `github_pat_*`, `AKIA*`.
+- **I fix**: `temperature=0.3` → `0.1` in `scripts/flux-local.py:run_lens` + added 2 example findings at the bottom of `scripts/lens-local/fd-quality.md` ("Example findings (use this exact shape)" section). Re-run on `db05fd2`: 33s wall, emits exactly `No quality issues found`. Spike result in `docs/spike-results/2026-05-11-flux-local-db05fd2-quality-tuned.txt`.
+- **OPENROUTER_API_KEY** at `/Users/sma/.cache/interfer/openrouter.key` (mode 600, not in repo). User pasted the key in the 2026-05-08 transcript; rotate at openrouter.ai/keys before relying on it again.
+- **Calibration ground truth**: 8 substantive findings from 3 spike runs, 0 hallucinations, 4 became commits, 2 true negatives, 2 quality-lens process failures (1 self-affirmation loop, 1 content loop — latter fixed by I). Adjudication table in `docs/spike-results/CALIBRATION.md`. **Use as baseline for J's overlap measurement.**
+- **interfer server `/v1/chat/completions`** at `interverse/interfer/server/main.py:1040` always streams SSE (no JSON branch). flux-local handles SSE accumulation client-side. Default port 8421; spike runs used 8423.
+- **Hook collision**: `security_reminder_hook.py` pattern-matches specific function names (binary-deserialize, system-shell-exec) — fires even in *warnings against* using them. Rephrase as "unsafe deserialization" / "system-shell calls" if it blocks a write.
+- **Subrepo trap**: `interverse/interfer/` is its own git repo. Outer monorepo `.gitignore` excludes it. All k8c commits/pushes from `/Users/sma/projects/Sylveste/interverse/interfer/`. Always `env -u GIT_INDEX_FILE` prefix.
+- **Key paths for J**:
+  - Canonical lenses (use these for Opus side): `~/.claude/plugins/cache/interagency-marketplace/interflux/0.2.69/agents/review/fd-{correctness,safety,quality}.md`
+  - Slimmed lenses (already used on local side): `interverse/interfer/scripts/lens-local/fd-{correctness,safety,quality}.md`
+  - Adjudicated findings: `interverse/interfer/docs/spike-results/CALIBRATION.md`
+  - Diff hashes for A/B: `3f60481`, `5dad6cf`, `db05fd2` (capture via `env -u GIT_INDEX_FILE git show <hash>` from interfer subrepo)
+- **bd push.sh requires tty** — `bash .beads/push.sh` gates on interactive confirm. Tell the user to run it; don't bypass.
