@@ -22,11 +22,13 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import os
 import re
 import sys
 import time
 from pathlib import Path
+from typing import Any, TypedDict
 
 import httpx
 
@@ -34,6 +36,40 @@ import httpx
 # attacks like `--lens ../etc/passwd`. Found by the safety lens reviewing its
 # own deployment infra (commit 9aed7ae, k8c spike 2026-05-10).
 _LENS_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
+
+# Patterns to redact from stdout when printing review content. The local model
+# may quote pieces of the diff back at us, and if the diff contains a secret
+# the model will faithfully reproduce it. Defense-in-depth flagged by the
+# safety lens on the 2026-05-10 spike.
+_SECRET_RE = re.compile(
+    r"\b(sk-or-v1-[A-Za-z0-9_-]{30,}|sk-ant-[A-Za-z0-9_-]{30,}|sk-proj-[A-Za-z0-9_-]{30,}|ghp_[A-Za-z0-9_-]{30,}|github_pat_[A-Za-z0-9_-]{30,}|AKIA[0-9A-Z]{16})"
+)
+
+_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+
+
+def _redact_secrets(text: str) -> str:
+    """Mask known API-key / token patterns before printing review content."""
+    return _SECRET_RE.sub(
+        lambda m: f"<REDACTED:{m.group(1)[:7]}...{len(m.group(1))} chars>", text
+    )
+
+
+class LensResult(TypedDict):
+    """Structured return value from `run_lens`.
+
+    Typed alias so callers don't have to guess at the dict shape and so
+    static checkers can flag missed fields. Promoted from a bare `dict`
+    return hint after the quality-lens slim run flagged it (k8c spike,
+    commit 5dad6cf).
+    """
+
+    lens: str
+    wall_s: float
+    finish_reason: str | None
+    completion_tokens: int
+    content: str
+    error: str | None
 
 
 class FluxLocalError(Exception):
@@ -114,7 +150,7 @@ async def run_lens(
     system_prompt: str,
     diff: str,
     max_tokens: int,
-) -> dict:
+) -> LensResult:
     """Fire one lens. Returns timing + response text + finish_reason."""
     user_msg = (
         "Review the following diff. Apply your lens. List concrete findings; "
@@ -136,8 +172,6 @@ async def run_lens(
         # interfer's /v1/chat/completions always returns text/event-stream.
         # Accumulate `delta.content` chunks; last chunk carries finish_reason
         # and (optionally) usage.
-        import json as _json
-
         chunks: list[str] = []
         finish: str | None = None
         completion_tokens = 0
@@ -155,8 +189,8 @@ async def run_lens(
                 if data == "[DONE]":
                     break
                 try:
-                    obj = _json.loads(data)
-                except _json.JSONDecodeError:
+                    obj = json.loads(data)
+                except json.JSONDecodeError:
                     continue
                 # Some OpenAI-compat servers emit errors mid-stream as
                 # `{"error": {...}}` inside a 200-OK response. Without this
@@ -222,6 +256,22 @@ async def main_async(args: argparse.Namespace) -> int:
 
     prompts = {name: load_lens_prompt(name, lens_dirs) for name in lens_names}
 
+    # Warn (don't block) when sending the diff to a non-loopback server.
+    # Local-inference flux-review is meant to keep the diff on the laptop;
+    # an external server URL might be intentional (e.g., a trusted internal
+    # interfer host), but flag it so it's not accidental. Flagged by the
+    # safety lens on the 2026-05-10 spike.
+    from urllib.parse import urlparse
+
+    parsed_server = urlparse(args.server)
+    if parsed_server.hostname and parsed_server.hostname not in _LOOPBACK_HOSTS:
+        print(
+            f"WARNING: --server {args.server!r} is not loopback "
+            f"({sorted(_LOOPBACK_HOSTS)}); diff content will leave this machine.",
+            file=sys.stderr,
+            flush=True,
+        )
+
     print(
         f"flux-local — {len(lens_names)} lenses, model={args.model}, "
         f"diff={diff_path.name} ({len(diff)} chars)",
@@ -267,7 +317,10 @@ async def main_async(args: argparse.Namespace) -> int:
         if r["error"]:
             print(f"ERROR: {r['error']}")
         else:
-            print(r["content"])
+            # The model may echo diff content back; redact known token
+            # patterns before printing so secrets in the diff don't leak
+            # to stdout/log files.
+            print(_redact_secrets(r["content"]))
 
     return 0 if all(not r["error"] for r in results) else 1
 
