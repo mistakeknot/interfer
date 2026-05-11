@@ -29,7 +29,12 @@ cache (use `FLUX_LENS_DIR` to override the default location).
 
 | File | Differences from canonical |
 |---|---|
-| `fd-quality.md` | Python-only; dropped Go/TS/Shell/Rust sections; explicit "one-line-per-finding" output schema; explicit "no preambles" instruction |
+| `fd-correctness.md` | Python-only; dropped Go/TS/Shell sections; explicit "no external doc reads" preamble; same one-line-per-finding schema; `Interleaving:` follow-up line for race findings |
+| `fd-safety.md` | Python-CLI / local-HTTP-server scope; dropped "First Step (MANDATORY)" + threat-model classification; explicit "this is laptop tooling, not internet-facing" framing to suppress hypothetical-attack flagging |
+| `fd-quality.md` | Python-only; dropped Go/TS/Shell/Rust sections; explicit one-line-per-finding output schema; explicit "no preambles" instruction |
+
+All three use the same severity scale (`BLOCKER` / `MAJOR` / `MINOR` / `NIT`) and the same output schema:
+`SEVERITY: file:line — concrete observation. Suggested fix: one sentence.`
 
 ## Add a new override
 
