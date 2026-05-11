@@ -164,7 +164,13 @@ async def run_lens(
             {"role": "user", "content": user_msg},
         ],
         "max_tokens": max_tokens,
-        "temperature": 0.3,
+        # Quality lens at temperature 0.3 was getting stuck in content loops
+        # on small models — it would write the same 8-line analysis multiple
+        # times without committing to the SEVERITY:file:line schema. Lowering
+        # to 0.1 reduces drift; combined with example findings in the slim
+        # prompt (scripts/lens-local/fd-quality.md) it now commits to output.
+        # Sylveste-k8c step I, 2026-05-11.
+        "temperature": 0.1,
         "stream": True,  # interfer always streams; client-side SSE accumulation
     }
     t0 = time.monotonic()
