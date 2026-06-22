@@ -76,6 +76,10 @@ class GenerationResult:
     timestamp: str
     run: int = 1
     timed_out: bool = False
+    # Reasoning tokens consumed before/alongside output (reasoning-mode cloud
+    # models). Recorded separately so tokens_generated stays output-only and
+    # cost/throughput telemetry isn't conflated. 0 for non-reasoning backends.
+    reasoning_tokens: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -603,6 +607,7 @@ def _generate_cloud_openai_compat(
     return {
         "output_text": output_text,
         "tokens_generated": n_tokens,
+        "reasoning_tokens": n_reasoning_tokens,
         "elapsed_s": round(elapsed, 3),
         "ttft_s": round(ttft, 3),
         "gen_tps": round(n_tokens / elapsed if elapsed > 0 else 0, 2),
@@ -827,6 +832,7 @@ def stage_generate(
                     timestamp=datetime.now(timezone.utc).isoformat(),
                     run=run_i,
                     timed_out=result.get("timed_out", False),
+                    reasoning_tokens=result.get("reasoning_tokens", 0),
                 )
 
                 # Append to JSONL (crash-safe — one line at a time)
@@ -834,9 +840,14 @@ def stage_generate(
                     f.write(json.dumps(gen_result.to_dict()) + "\n")
 
                 timeout_tag = " [TIMEOUT]" if result.get("timed_out") else ""
+                reasoning_tag = (
+                    f" (+{result['reasoning_tokens']} reasoning)"
+                    if result.get("reasoning_tokens")
+                    else ""
+                )
                 print(
                     f" {result['gen_tps']} tok/s, "
-                    f"{result['tokens_generated']} tokens, "
+                    f"{result['tokens_generated']} tokens{reasoning_tag}, "
                     f"{result['elapsed_s']}s{timeout_tag}"
                 )
 

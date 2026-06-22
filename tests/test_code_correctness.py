@@ -101,6 +101,89 @@ def test_generate_cloud_string_back_compat():
     assert "Unknown cloud provider" not in str(exc_info.value)
 
 
+def test_generate_cloud_openai_compat_records_reasoning_tokens(monkeypatch):
+    """Sylveste-uk3: reasoning tokens are captured from the stream usage block
+    and returned as a field separate from tokens_generated (output-only).
+
+    OpenRouter's final usage-only event carries
+    completion_tokens_details.reasoning_tokens; without plumbing it through we
+    undercount billable output for reasoning-mode cloud models.
+    """
+    import types
+
+    from benchmarks import holistic_benchmark as hb
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+
+    # Build a fake SSE stream: one content delta, then a usage-only event.
+    content_delta = types.SimpleNamespace(content="42", reasoning=None)
+    content_event = types.SimpleNamespace(
+        choices=[types.SimpleNamespace(delta=content_delta)],
+        usage=None,
+    )
+    usage_details = types.SimpleNamespace(reasoning_tokens=1234)
+    usage_event = types.SimpleNamespace(
+        choices=[],
+        usage=types.SimpleNamespace(
+            completion_tokens=7,
+            completion_tokens_details=usage_details,
+        ),
+    )
+
+    class _FakeCompletions:
+        def create(self, **kwargs):
+            return iter([content_event, usage_event])
+
+    class _FakeChat:
+        completions = _FakeCompletions()
+
+    class _FakeClient:
+        def __init__(self, *args, **kwargs):
+            self.chat = _FakeChat()
+
+    # Patch the OpenAI symbol imported lazily inside the function.
+    import openai
+
+    monkeypatch.setattr(openai, "OpenAI", _FakeClient)
+
+    cfg = {
+        "provider": "openai",
+        "model": "deepseek/deepseek-v4-flash",
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "reasoning_effort": "high",
+    }
+    result = hb._generate_cloud_openai_compat(
+        cfg,
+        messages=[{"role": "user", "content": "what is 6*7?"}],
+        max_tokens=64,
+        timeout=30.0,
+    )
+
+    assert result["tokens_generated"] == 7  # output only
+    assert result["reasoning_tokens"] == 1234  # not conflated into output
+    assert result["output_text"] == "42"
+
+    # And the field is carried on GenerationResult (default 0 elsewhere).
+    gr = hb.GenerationResult(
+        config="cloud:deepseek-v4-flash",
+        prompt_id="p1",
+        category="",
+        difficulty="",
+        output_text=result["output_text"],
+        tokens_generated=result["tokens_generated"],
+        elapsed_s=result["elapsed_s"],
+        ttft_s=result["ttft_s"],
+        gen_tps=result["gen_tps"],
+        peak_mem_gb=result["peak_mem_gb"],
+        thermal_start="",
+        thermal_end="",
+        timestamp="2026-05-06T00:00:00Z",
+        reasoning_tokens=result["reasoning_tokens"],
+    )
+    assert gr.to_dict()["reasoning_tokens"] == 1234
+
+
 def test_swebench_lite_dry_run_emits_zero_pass(tmp_path):
     # Matches the bead's verification command precisely.
     sc = cc.run_suite(
