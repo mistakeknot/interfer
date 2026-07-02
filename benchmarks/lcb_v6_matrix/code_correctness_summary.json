@@ -97,22 +97,6 @@
   },
   {
     "suite": "livecodebench-v6",
-    "model": "flash-moe:397b",
-    "n_problems": 175,
-    "n_passed": 38,
-    "pass_at_1": 0.21714285714285714,
-    "median_gen_elapsed_s": 180.032,
-    "median_ttft_s": 0,
-    "median_exec_elapsed_s": 0.128,
-    "errors": 0,
-    "dry_run": false,
-    "limit": 175,
-    "results_file": "benchmarks/lcb_v6_matrix/code_correctness.jsonl",
-    "started_at": "2026-05-04T09:00:05.182360+00:00",
-    "finished_at": "2026-05-04T09:02:40.233707+00:00"
-  },
-  {
-    "suite": "livecodebench-v6",
     "model": "cloud:deepseek-v4-flash",
     "n_problems": 124,
     "n_passed": 65,
@@ -142,5 +126,21 @@
     "results_file": "benchmarks/lcb_v6_matrix/code_correctness.jsonl",
     "started_at": "2026-05-09T01:17:51.402962+00:00",
     "finished_at": "2026-05-09T10:54:12.850459+00:00"
+  },
+  {
+    "suite": "livecodebench-v6",
+    "model": "flash-moe:397b",
+    "n_problems": 175,
+    "n_passed": 38,
+    "pass_at_1": 0.21714285714285714,
+    "median_gen_elapsed_s": 180.032,
+    "median_ttft_s": 0,
+    "median_exec_elapsed_s": 0.128,
+    "errors": 0,
+    "dry_run": false,
+    "limit": 175,
+    "results_file": "benchmarks/lcb_v6_matrix/code_correctness.jsonl",
+    "started_at": "2026-06-29T09:00:06.074090+00:00",
+    "finished_at": "2026-06-29T09:00:06.074741+00:00"
   }
 ]
