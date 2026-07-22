@@ -1,0 +1,30 @@
+{
+  "name": "interfer",
+  "version": "0.1.0",
+  "description": "Local MLX-LM inference server for Apple Silicon. Custom serving layer with priority queuing, thermal-aware scheduling, and experiment hooks for Sylveste/Clavain.",
+  "license": "MIT",
+  "keywords": [
+    "inference",
+    "mlx",
+    "apple-silicon",
+    "local-model",
+    "serving"
+  ],
+  "author": "mistakeknot",
+  "interface": {
+    "displayName": "interfer",
+    "shortDescription": "Local MLX-LM inference server for Apple Silicon. Custom serving layer with priority queuing, thermal-aware scheduling..."
+  },
+  "mcpServers": {
+    "interfer": {
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "server.mcp"
+      ],
+      "cwd": "./"
+    }
+  }
+}
