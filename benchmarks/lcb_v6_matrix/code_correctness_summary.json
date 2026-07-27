@@ -140,7 +140,7 @@
     "dry_run": false,
     "limit": 175,
     "results_file": "benchmarks/lcb_v6_matrix/code_correctness.jsonl",
-    "started_at": "2026-06-29T09:00:06.074090+00:00",
-    "finished_at": "2026-06-29T09:00:06.074741+00:00"
+    "started_at": "2026-07-27T09:00:05.670342+00:00",
+    "finished_at": "2026-07-27T09:00:05.671014+00:00"
   }
 ]
