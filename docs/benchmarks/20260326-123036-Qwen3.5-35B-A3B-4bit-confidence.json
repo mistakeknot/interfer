@@ -1,5 +1,5 @@
 {
-  "model": "/Users/sma/.cache/huggingface/models/Qwen3.5-35B-A3B-4bit",
+  "model": "/Users/user/.cache/huggingface/models/Qwen3.5-35B-A3B-4bit",
   "total_tokens": 884,
   "mean_confidence": 0.9105,
   "median_confidence": 1.0,

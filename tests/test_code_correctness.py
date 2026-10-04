@@ -1,4 +1,4 @@
-"""Tests for benchmarks/code_correctness.py (Sylveste-b7j).
+"""Tests for benchmarks/code_correctness.py.
 
 Exercises the dry-run path end-to-end and proves:
   1. Dry-run does not import mlx (swe-bench-lite stub path).
@@ -33,7 +33,7 @@ def test_resolve_config_unknown_raises():
 
 
 def test_resolve_config_deepseek_v4_aliases():
-    """Sylveste-bvh: DeepSeek V4 cloud aliases route via OpenRouter OpenAI-compat."""
+    """DeepSeek V4 cloud aliases route via OpenRouter OpenAI-compat."""
     for alias, expected_model in [
         ("cloud:deepseek-v4-flash", "deepseek/deepseek-v4-flash"),
         ("cloud:deepseek-v4-pro", "deepseek/deepseek-v4-pro"),
@@ -102,7 +102,7 @@ def test_generate_cloud_string_back_compat():
 
 
 def test_generate_cloud_openai_compat_records_reasoning_tokens(monkeypatch):
-    """Sylveste-uk3: reasoning tokens are captured from the stream usage block
+    """reasoning tokens are captured from the stream usage block
     and returned as a field separate from tokens_generated (output-only).
 
     OpenRouter's final usage-only event carries
@@ -282,5 +282,5 @@ def test_cli_rejects_missing_model():
 def test_swebench_non_dryrun_raises_not_implemented():
     from benchmarks.suites import swe_bench_lite
 
-    with pytest.raises(NotImplementedError, match="Sylveste-r8g"):
+    with pytest.raises(NotImplementedError, match="swe-bench-lite-runner"):
         swe_bench_lite.load_problems(dry_run=False)

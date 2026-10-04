@@ -1,4 +1,4 @@
-flux-local — 1 lenses, model=/Users/sma/Models/Qwen3.6-35B-A3B-4bit, diff=flux-local-3f60481.diff (9904 chars)
+flux-local — 1 lenses, model=/Users/user/Models/Qwen3.6-35B-A3B-4bit, diff=flux-local-3f60481.diff (9904 chars)
   lenses: quality
   server: http://localhost:8423
 

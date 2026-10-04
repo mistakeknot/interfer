@@ -1,5 +1,5 @@
 {
-  "model": "/Users/sma/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
+  "model": "/Users/user/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
   "total_runs": 8,
   "median_tok_s": 46.9,
   "mean_tok_s": 44.5,
@@ -11,12 +11,12 @@
   "thermal_start": "nominal",
   "thermal_end": "nominal",
   "kv_bits": null,
-  "draft_model": "/Users/sma/.cache/huggingface/models/Qwen3.5-0.8B-OptiQ-4bit",
+  "draft_model": "/Users/user/.cache/huggingface/models/Qwen3.5-0.8B-OptiQ-4bit",
   "num_draft_tokens": 3,
   "results": [
     {
       "prompt_name": "coding_function",
-      "model": "/Users/sma/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
+      "model": "/Users/user/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
       "tokens_generated": 100,
       "generation_time_s": 1.8755,
       "ttft_s": 0.2487,
@@ -29,7 +29,7 @@
     },
     {
       "prompt_name": "coding_debug",
-      "model": "/Users/sma/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
+      "model": "/Users/user/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
       "tokens_generated": 99,
       "generation_time_s": 2.2698,
       "ttft_s": 0.286,
@@ -42,7 +42,7 @@
     },
     {
       "prompt_name": "reasoning_math",
-      "model": "/Users/sma/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
+      "model": "/Users/user/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
       "tokens_generated": 87,
       "generation_time_s": 2.3959,
       "ttft_s": 0.2952,
@@ -55,7 +55,7 @@
     },
     {
       "prompt_name": "reasoning_logic",
-      "model": "/Users/sma/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
+      "model": "/Users/user/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
       "tokens_generated": 100,
       "generation_time_s": 2.1387,
       "ttft_s": 0.2465,
@@ -68,7 +68,7 @@
     },
     {
       "prompt_name": "tool_calling",
-      "model": "/Users/sma/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
+      "model": "/Users/user/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
       "tokens_generated": 97,
       "generation_time_s": 1.8897,
       "ttft_s": 0.2726,
@@ -81,7 +81,7 @@
     },
     {
       "prompt_name": "factual_short",
-      "model": "/Users/sma/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
+      "model": "/Users/user/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
       "tokens_generated": 7,
       "generation_time_s": 0.4109,
       "ttft_s": 0.2938,
@@ -94,7 +94,7 @@
     },
     {
       "prompt_name": "creative_short",
-      "model": "/Users/sma/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
+      "model": "/Users/user/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
       "tokens_generated": 99,
       "generation_time_s": 2.1065,
       "ttft_s": 0.239,
@@ -107,7 +107,7 @@
     },
     {
       "prompt_name": "instruction_following",
-      "model": "/Users/sma/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
+      "model": "/Users/user/.cache/huggingface/models/Qwen3.5-122B-A10B-4bit",
       "tokens_generated": 100,
       "generation_time_s": 1.6424,
       "ttft_s": 0.3003,

@@ -19,7 +19,7 @@ to degenerate on smaller models when:
 uv run python scripts/flux-local.py <diff> \
   --lens-dir scripts/lens-local \
   --lens correctness,safety,quality \
-  --model /Users/sma/Models/Qwen3.6-35B-A3B-4bit
+  --model /Users/user/Models/Qwen3.6-35B-A3B-4bit
 ```
 
 If a lens isn't in this directory, fall back to the default plugin

@@ -1,6 +1,5 @@
 # LiveCodeBench v6 Matrix — 7-Model Comparison (2026-04-27)
 
-**Beads:** [Sylveste-xzw], [Sylveste-b7j], [Sylveste-2ss]
 **Harness:** `benchmarks/code_correctness.py` + `scripts/run_lcb_matrix.sh`
 **Output:** `benchmarks/lcb_v6_matrix/code_correctness{,_summary}.{jsonl,json}`
 **Run dates:** Started 2026-04-26 13:40 PDT, completed 2026-04-27 19:52 PDT (~30h wall)
@@ -143,15 +142,15 @@ Cloud cost: $0 (ChatGPT subscription, no API key). Local cost: ~70 kWh of M5 Max
 
 - **n=1 sampling**: LCB official runner uses n=10 for self-consistency. Our pass@1 numbers are systematically lower than LCB-reported figures by 5-15 points (varies by model). Use ratios, not absolute pass@1 against the leaderboard.
 - **Contamination**: LCB v6 covers May 2023 → April 2025. Qwen3.6 and DeepSeek V4 (both released April 2026) likely had this data. Treat absolute numbers as contaminated; relative orderings within the matrix remain valid.
-- **No DeepSeek V4**: doesn't fit on 128GB Mac (V4-Flash 4bit is 151GB on disk). Cloud-API comparison filed as [Sylveste-bvh].
+- **No DeepSeek V4**: doesn't fit on 128GB Mac (V4-Flash 4bit is 151GB on disk). A cloud-API comparison is a follow-up.
 - **No GPT-5.5 thinking-vs-not A/B**: codex CLI doesn't expose a `--no-think` flag for ChatGPT-OAuth-backed models.
 - **flash-moe n=141 caveat**: any cross-model comparison involving flash-moe must restrict to that 141-problem subset for fairness.
 
 ## Follow-up beads
 
-- [Sylveste-bvh] (P2) Add cloud:deepseek-v4-flash + cloud:deepseek-v4-pro to LCB v6 matrix
-- [Sylveste-6ru] (P2) Qwen3.6-35B-A3B quantization sweep (DWQ vs nvfp4 vs OptiQ vs plain) — partially answered: drop DWQ
-- [Sylveste-ep8] (P2) Evaluate Qwen3.6-27B-OptiQ-4bit — superseded by this finding (27b dense is dominated; OptiQ unlikely to flip the verdict on M5)
-- [Sylveste-0gi] (P2) Port DeepSeek V4 Flash to flash-moe — much higher priority now that flash-moe-397B is shown to under-deliver
+- Add cloud:deepseek-v4-flash + cloud:deepseek-v4-pro to LCB v6 matrix
+- Qwen3.6-35B-A3B quantization sweep (DWQ vs nvfp4 vs OptiQ vs plain) — partially answered: drop DWQ
+- Evaluate Qwen3.6-27B-OptiQ-4bit — superseded by this finding (27b dense is dominated; OptiQ unlikely to flip the verdict on M5)
+- Port DeepSeek V4 Flash to flash-moe — much higher priority now that flash-moe-397B is shown to under-deliver
 - **NEW** flash-moe stability investigation (worker crash at problem 151)
 - **NEW** flash-moe slowness investigation (4 tok/s vs claimed 12.9 tok/s)

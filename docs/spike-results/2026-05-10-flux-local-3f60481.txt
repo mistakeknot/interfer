@@ -1,4 +1,4 @@
-flux-local — 3 lenses, model=/Users/sma/Models/Qwen3.6-35B-A3B-4bit, diff=flux-local-3f60481.diff (9904 chars)
+flux-local — 3 lenses, model=/Users/user/Models/Qwen3.6-35B-A3B-4bit, diff=flux-local-3f60481.diff (9904 chars)
   lenses: correctness, safety, quality
   server: http://localhost:8423
 
@@ -150,7 +150,7 @@ Here's a thinking process that leads to the review:
 ### Flux-Drive Correctness Review: `scripts/flux-local.py`
 
 **Reviewer:** Julik (Flux-drive Correctness Reviewer)
-**Subject:** `scripts/flux-local.py` (Sylveste-k8c step 1)
+**Subject:** `scripts/flux-local.py` (step 1)
 **Status:** **FAIL** (Data Integrity Violations)
 
 ---

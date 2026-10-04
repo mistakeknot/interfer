@@ -1,6 +1,6 @@
 {
-  "model_path": "/Users/sma/Models/mlx-community-Qwen3.5-397B-A17B-4bit",
-  "packed_dir": "/Users/sma/Models/mlx-community-Qwen3.5-397B-A17B-4bit/packed_experts",
+  "model_path": "/Users/user/Models/mlx-community-Qwen3.5-397B-A17B-4bit",
+  "packed_dir": "/Users/user/Models/mlx-community-Qwen3.5-397B-A17B-4bit/packed_experts",
   "num_prompts": 5,
   "max_tokens": 200,
   "avg_tok_per_s": 1.534630200984329,

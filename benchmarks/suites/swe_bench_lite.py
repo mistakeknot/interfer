@@ -1,7 +1,7 @@
 """SWE-bench Lite suite — dry-run stub.
 
 Full runner (git clone + uv venv + patch apply + pytest per problem) is
-tracked in Sylveste-r8g. This stub exists so the bead's verification command
+tracked as a follow-up. This stub exists so the verification command
 `--suite=swe-bench-lite --dry-run` still works end-to-end against the CLI
 dispatcher: it returns 2 canned problems and a deterministic 0/2 pass@1
 result without touching the network, Docker, or venvs.
@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-FOLLOWUP_BEAD = "Sylveste-r8g"
+FOLLOWUP_BEAD = "swe-bench-lite-runner"
 
 
 DRY_RUN_FIXTURE: list[dict] = [

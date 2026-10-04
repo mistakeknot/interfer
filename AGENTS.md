@@ -102,7 +102,7 @@ cd interverse/interfer
 uv run pytest tests/ -v
 ```
 
-## Holistic Benchmark (sylveste-2ss)
+## Holistic Benchmark
 
 `benchmarks/holistic_benchmark.py` measures **quality + latency + memory + reliability**
 across configs, not just decode tok/s. Four-stage pipeline:
@@ -154,7 +154,7 @@ one line at a time, so killed runs can resume.
 - `thermal_worst`: worst thermal pressure observed
 - `errors`: number of generations that crashed
 
-### Code Correctness Benchmark (Sylveste-b7j)
+### Code Correctness Benchmark
 
 `benchmarks/code_correctness.py` adds **external-suite pass@1** on top of the
 holistic's internal `exec_test` rubric. Two suites:
@@ -163,7 +163,7 @@ holistic's internal `exec_test` rubric. Two suites:
   Stdin/stdout execution, no Docker. First-run pulls from HuggingFace
   (`livecodebench/code_generation_lite`, `release_v6`) and caches to
   `benchmarks/datasets_cache/livecodebench_v6.jsonl`.
-- `swe-bench-lite` — **stubbed** pending Sylveste-r8g. `--dry-run` works; real
+- `swe-bench-lite` — **stubbed** pending a follow-up. `--dry-run` works; real
   runs raise `NotImplementedError`.
 
 ```bash

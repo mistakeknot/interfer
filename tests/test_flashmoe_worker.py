@@ -427,7 +427,7 @@ class TestFlashMoeQ3WorkerFlags:
 
 
 # ---------------------------------------------------------------------------
-# Sylveste-6f0: cooperative cancel, stderr drainer, health-probe wedge detect
+# cooperative cancel, stderr drainer, health-probe wedge detect
 # ---------------------------------------------------------------------------
 
 
@@ -497,7 +497,7 @@ def slow_flashmoe_port():
 
 
 class TestCooperativeCancel:
-    """Sylveste-6f0 H2: cancel Event must close socket and release lock."""
+    """H2: cancel Event must close socket and release lock."""
 
     def _make_worker(self, port: int) -> FlashMoeWorker:
         w = FlashMoeWorker(
@@ -579,7 +579,7 @@ class TestCooperativeCancel:
 
 
 class TestStderrDrainer:
-    """Sylveste-6f0 H1: subprocess stderr drained to log file, no PIPE wedge."""
+    """H1: subprocess stderr drained to log file, no PIPE wedge."""
 
     def test_drainer_writes_to_log_file(self, tmp_path, monkeypatch):
         """stderr bytes written by a fake subprocess end up in the log file."""
@@ -699,7 +699,7 @@ def dead_health_port():
 
 
 class TestHealthProbeWedgeDetection:
-    """Sylveste-6f0 H3: watchdog must catch wedged-but-running binary."""
+    """H3: watchdog must catch wedged-but-running binary."""
 
     def test_probe_health_returns_true_on_responsive_server(
         self, fake_flashmoe_port: int

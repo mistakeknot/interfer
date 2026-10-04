@@ -1,8 +1,8 @@
 """Code-correctness benchmark for flash-MoE / MLX / cloud models.
 
 Wires LiveCodeBench v6 (primary, April 2026) into the holistic benchmark
-harness. SWE-bench Lite support is stubbed — see Sylveste-r8g for the
-full runner.
+harness. SWE-bench Lite support is stubbed; the
+full runner is a follow-up.
 
 Usage:
     # Dry-run — no MLX, uses a stub model + fixture problems. Fast CI check.
@@ -71,7 +71,7 @@ MODEL_ALIASES: dict[str, str] = {
     "cloud:deepseek-v4-flash-pinned": "cloud-deepseek-v4-flash-pinned",
     "cloud:deepseek-v4-pro": "cloud-deepseek-v4-pro",
 }
-# Dropped 2026-04-29 (Sylveste-2ss): local:qwen3.5-9b, qwen3.5-35b, qwen3.5-122b,
+# Dropped 2026-04-29: local:qwen3.5-9b, qwen3.5-35b, qwen3.5-122b,
 # qwen3.6-27b, qwen3.6-35b-dwq, qwen3.6-35b-dwq-thinking. See CONFIG_REGISTRY
 # comment in holistic_benchmark.py for rationale.
 
