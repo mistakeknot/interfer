@@ -11,3 +11,4 @@ build/
 benchmarks/logs/
 benchmarks/datasets_cache/
 benchmarks/code_correctness_results/
+.clavain/
