@@ -8,7 +8,7 @@ For each lens, POSTs to the server's /v1/chat/completions endpoint with the
 lens's system prompt and the diff as user content. Fires all lenses in
 parallel. Prints each lens's review separately.
 
-Spike scope (Sylveste-k8c step 1):
+Spike scope (step 1):
 - Plumbing only — does the bridge work, does the server batch?
 - Quality calibration is a later step; for now any non-empty response is
   considered "the bridge works".
@@ -169,7 +169,7 @@ async def run_lens(
         # times without committing to the SEVERITY:file:line schema. Lowering
         # to 0.1 reduces drift; combined with example findings in the slim
         # prompt (scripts/lens-local/fd-quality.md) it now commits to output.
-        # Sylveste-k8c step I, 2026-05-11.
+        # Step I, 2026-05-11.
         "temperature": 0.1,
         "stream": True,  # interfer always streams; client-side SSE accumulation
     }

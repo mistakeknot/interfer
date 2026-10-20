@@ -1,5 +1,4 @@
 ---
-bead: sylveste-uln
 date: 2026-03-28
 model: DeepSeek V3.2 4-bit
 hardware: M5 Max 128GB

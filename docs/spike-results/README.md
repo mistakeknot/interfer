@@ -1,7 +1,7 @@
 # flux-local spike results
 
 Captures from running `scripts/flux-local.py` against historical diffs for
-Sylveste-k8c calibration. Each file is the verbatim output of one fan-out:
+Flux-local calibration. Each file is the verbatim output of one fan-out:
 N lenses, one local model, one diff.
 
 Use these to:

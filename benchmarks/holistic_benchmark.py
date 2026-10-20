@@ -157,7 +157,7 @@ CONFIG_REGISTRY: dict[str, dict[str, Any]] = {
         "label": "Qwen3.5-0.8B-4bit",
         "description": "Tiny dense model, draft-size reference (weights not cached)",
     },
-    # Dominated configs pruned 2026-04-29 (Sylveste-2ss) per LCB v6 matrix:
+    # Dominated configs pruned 2026-04-29 per LCB v6 matrix:
     #   - 35b (Qwen3.5-35B-A3B): obsolete, +22.3 points behind 3.6 at 5× decode speed
     #   - 122b (Qwen3.5-122B-A10B): superseded; quality not retested vs 3.6 because dominated by cloud
     #   - 27b-3.6 (Qwen3.6-27B dense): 4× slower per-token on M5, lower quality than 35b-3.6
@@ -246,7 +246,7 @@ CONFIG_REGISTRY: dict[str, dict[str, Any]] = {
         "reasoning_effort": "high",
         "max_output_tokens": 32768,
         "label": "DeepSeek V4 Flash (high reasoning, DeepInfra route, 32K budget)",
-        "description": "Pin OpenRouter to DeepInfra (verified faithful reasoning passthrough 2026-05-08). max_output_tokens=32768 to avoid 8K cap eating reasoning before code emerges — see Sylveste-bvh research.",
+        "description": "Pin OpenRouter to DeepInfra (verified faithful reasoning passthrough 2026-05-08). max_output_tokens=32768 to avoid 8K cap eating reasoning before code emerges.",
     },
     "cloud-deepseek-v4-pro": {
         "backend": "cloud",
@@ -391,7 +391,7 @@ def _generate_flashmoe(
         _generate_flashmoe._worker = worker
         _generate_flashmoe._config_key = config_key
 
-    # Sylveste-6f0: pass a cancel Event so the worker can close the underlying
+    # pass a cancel Event so the worker can close the underlying
     # HTTP response when our outer timer fires. Without this, breaking out of
     # the for-loop leaves the socket read blocked and _generate_lock held —
     # producing the wedge cascade observed in the LCB v6 matrix run.

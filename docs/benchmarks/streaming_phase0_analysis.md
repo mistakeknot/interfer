@@ -1,5 +1,4 @@
 ---
-bead: sylveste-14g
 date: 2026-03-28
 type: experiment-result
 phase: 0

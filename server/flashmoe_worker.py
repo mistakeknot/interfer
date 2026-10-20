@@ -31,7 +31,7 @@ _MAX_BACKOFF_S = 30.0
 _HEALTH_TIMEOUT = 5.0
 _STARTUP_TIMEOUT = 30.0
 
-# Health-probe liveness — catches wedged-but-running binary (Sylveste-6f0).
+# Health-probe liveness — catches wedged-but-running binary.
 # Process-exit polling alone misses this failure mode; the binary stays alive
 # but stops servicing /v1/chat/completions.
 _HEALTH_PROBE_INTERVAL = 10.0
@@ -98,7 +98,7 @@ class FlashMoeWorker:
         self._crash_history: list[dict[str, Any]] = []
         self._health_probe_failures: int = 0
 
-        # Sylveste-6f0: drain the binary's stderr to a log file on a daemon
+        # drain the binary's stderr to a log file on a daemon
         # thread. Without this, stderr=PIPE fills its 64KB OS buffer after
         # enough binary output and the binary's write(2) blocks inside its
         # inference loop — invisible wedge that the exit-code watchdog cannot
@@ -159,7 +159,7 @@ class FlashMoeWorker:
             cwd=binary_dir,
         )
 
-        # Sylveste-6f0: drain stderr before anything that waits on the binary.
+        # drain stderr before anything that waits on the binary.
         # _wait_for_ready may need to read stderr on startup failure, so the
         # drainer captures output to a log file instead of leaving it queued
         # in the OS pipe buffer.
@@ -313,7 +313,7 @@ class FlashMoeWorker:
         ``cancel``: optional Event. When set by the caller, the generator
         closes the underlying HTTP response and returns cleanly. Without
         this, breaking out of the for-loop leaves the socket read blocked
-        and ``_generate_lock`` held — the Sylveste-6f0 wedge cascade.
+        and ``_generate_lock`` held — the wedge cascade.
         """
         import urllib.request
         import urllib.error
@@ -440,7 +440,7 @@ class FlashMoeWorker:
 
         Two failure modes are distinguished:
           - exit-based: ``_process.poll()`` returns a code → binary died
-          - wedge-based (Sylveste-6f0): binary is alive but ``/health``
+          - wedge-based: binary is alive but ``/health``
             returns errors for ``_HEALTH_PROBE_MAX_FAILURES`` consecutive
             polls → binary is stuck inside its inference loop, SIGKILL it
             and let the exit-handling branch restart it on the next tick.
@@ -552,7 +552,7 @@ class FlashMoeWorker:
 
     # -- stderr drainer ------------------------------------------------------
     #
-    # Sylveste-6f0: stderr=subprocess.PIPE without a reader deadlocks the
+    # stderr=subprocess.PIPE without a reader deadlocks the
     # binary once the OS pipe buffer (~64KB on macOS) fills. Drain on a
     # daemon thread to disk so forensic data survives without wedging the
     # subprocess.

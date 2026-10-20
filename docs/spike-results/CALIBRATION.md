@@ -1,6 +1,5 @@
 ---
 date: 2026-05-11
-beads: [Sylveste-k8c]
 status: calibration data
 ---
 
